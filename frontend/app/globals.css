@@ -1,0 +1,348 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand System Palette */
+  --wa-white:         #FFFFFF;
+  --wa-soft-white:    #F7FAF9;
+  --wa-primary-green: #05392E;
+  --wa-bright-green:  #25D366;
+  --wa-deep-green:    #03241D;
+  --wa-soft-green:    #E8F5E9;
+  --wa-chat-bg:      #EFEAE2;
+  --wa-chat-bubble:  #D9FDD3;
+  --wa-text-primary:  #111B21;
+  --wa-text-sec:      #667781;
+  --wa-border:        #E5EAEA;
+  --wa-pending:       #F4B400;
+  --wa-danger:        #D32F2F;
+}
+
+body {
+  background-color: var(--wa-soft-white);
+  color: var(--wa-text-primary);
+  font-family: var(--font-quicksand), 'Quicksand', sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  overflow-x: hidden;
+}
+
+/* Dedicated Font Class for Numbers / Numeric Digits (Mochiy Pop P One) */
+.font-digits {
+  font-family: var(--font-digits), var(--font-quicksand), sans-serif !important;
+  letter-spacing: 0.02em;
+}
+
+/* ── REFINED 3D DESIGN SYSTEM — ENHANCED VISIBLE 3D ELEVATION ── */
+
+/* Level 1: Utility / Small Cards (Visible 3D Elevation) */
+.card-3d-sm {
+  background: #FFFFFF;
+  border: 1px solid rgba(5, 57, 46, 0.12);
+  box-shadow:
+    0 12px 30px rgba(5, 57, 46, 0.12),
+    0 4px 10px rgba(0, 0, 0, 0.04),
+    0 2px 0 rgba(5, 57, 46, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms ease;
+}
+
+.card-3d-sm-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(5, 57, 46, 0.25);
+  box-shadow:
+    0 18px 40px rgba(5, 57, 46, 0.18),
+    0 6px 14px rgba(0, 0, 0, 0.06),
+    0 3px 0 rgba(5, 57, 46, 0.12),
+    inset 0 1px 0 #FFFFFF;
+}
+
+/* Level 2: Main Content Cards (Deep 3D Floating Elevation) */
+.card-3d {
+  background: #FFFFFF;
+  border: 1px solid rgba(5, 57, 46, 0.14);
+  box-shadow:
+    0 20px 48px rgba(5, 57, 46, 0.14),
+    0 6px 18px rgba(0, 0, 0, 0.05),
+    0 3px 0 rgba(5, 57, 46, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1), border-color 200ms ease;
+}
+
+.card-3d-hover:hover {
+  transform: translateY(-4px);
+  border-color: rgba(5, 57, 46, 0.30);
+  box-shadow:
+    0 28px 60px rgba(5, 57, 46, 0.20),
+    0 8px 24px rgba(0, 0, 0, 0.07),
+    0 4px 0 rgba(5, 57, 46, 0.14),
+    inset 0 1px 0 #FFFFFF;
+}
+
+/* Level 3: Hero / Key Surface Anchor */
+.hero-3d {
+  background: #FFFFFF;
+  border: 1.5px solid rgba(5, 57, 46, 0.16);
+  box-shadow:
+    0 26px 64px rgba(5, 57, 46, 0.16),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    0 4px 0 rgba(5, 57, 46, 0.12),
+    inset 0 1px 0 #FFFFFF;
+  border-radius: 28px;
+}
+
+/* SOLID 3D PHYSICAL BUTTONS (Solid Base + Deep Floating Shadow) */
+.btn-3d-primary {
+  background-color: #05392E;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: 1px solid #03241D;
+  box-shadow:
+    0 8px 24px rgba(5, 57, 46, 0.38),
+    0 3px 8px rgba(0, 0, 0, 0.10),
+    0 2px 0 #03241D,
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.btn-3d-primary:hover:not(:disabled) {
+  background-color: #042E25;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(5, 57, 46, 0.44),
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 3px 0 #03241D,
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.btn-3d-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 4px 12px rgba(5, 57, 46, 0.25);
+}
+
+/* Bright Green CTA Button */
+.btn-3d-bright {
+  background-color: #25D366;
+  color: #111B21;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: 1px solid #1EAF53;
+  box-shadow:
+    0 8px 24px rgba(37, 211, 102, 0.40),
+    0 3px 8px rgba(0, 0, 0, 0.10),
+    0 2px 0 #1EAF53,
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.btn-3d-bright:hover:not(:disabled) {
+  background-color: #22C55E;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(37, 211, 102, 0.48),
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 3px 0 #1EAF53,
+    inset 0 1px 0 rgba(255, 255, 255, 0.50);
+}
+
+.btn-3d-bright:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    0 4px 12px rgba(37, 211, 102, 0.25);
+}
+
+/* Master Danger Red Button (#D32F2F) */
+.btn-3d-danger {
+  background-color: #D32F2F;
+  color: #FFFFFF;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: 1px solid #B71C1C;
+  box-shadow:
+    0 8px 24px rgba(211, 47, 47, 0.38),
+    0 3px 8px rgba(0, 0, 0, 0.10),
+    0 2px 0 #B71C1C,
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.btn-3d-danger:hover:not(:disabled) {
+  background-color: #C62828;
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 32px rgba(211, 47, 47, 0.46),
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 3px 0 #B71C1C;
+}
+
+.btn-3d-danger:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.25);
+}
+
+/* Soft Danger Red (Reject Action) */
+.btn-3d-danger-soft {
+  background-color: #FFEBEE;
+  color: #D32F2F;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: 1px solid rgba(211, 47, 47, 0.25);
+  box-shadow:
+    0 6px 18px rgba(211, 47, 47, 0.15),
+    0 2px 0 rgba(211, 47, 47, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: transform 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
+}
+
+.btn-3d-danger-soft:hover:not(:disabled) {
+  background-color: #FFCDD2;
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(211, 47, 47, 0.22);
+}
+
+.btn-3d-danger-soft:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(211, 47, 47, 0.12);
+}
+
+/* Secondary Soft White Button */
+.btn-3d-secondary {
+  background-color: #FFFFFF;
+  color: #111B21;
+  font-weight: 800;
+  font-size: 0.95rem;
+  border: 1px solid #CBD5E1;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.08),
+    0 2px 0 rgba(5, 57, 46, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.btn-3d-secondary:hover:not(:disabled) {
+  border-color: #94A3B8;
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.12),
+    0 3px 0 rgba(5, 57, 46, 0.14);
+}
+
+.btn-3d-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Solid 3D Icon Container */
+.icon-3d-container {
+  background-color: #E8F5E9;
+  border: 1px solid rgba(5, 57, 46, 0.20);
+  box-shadow:
+    0 6px 16px rgba(5, 57, 46, 0.10),
+    0 2px 0 rgba(5, 57, 46, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+}
+
+/* Floating Header Bar */
+.glass-header {
+  background-color: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(5, 57, 46, 0.12);
+  box-shadow:
+    0 12px 30px rgba(5, 57, 46, 0.08),
+    0 3px 8px rgba(0, 0, 0, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Navigation Pill System - Anti-Glitch & Zero Layout Shift */
+.nav-pill-item {
+  border: 1px solid transparent;
+  transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease, color 150ms ease;
+}
+
+.nav-pill-item:hover:not(.nav-pill-active) {
+  background-color: #F7FAF9;
+  border-color: rgba(5, 57, 46, 0.08);
+  color: #111B21;
+}
+
+.nav-pill-active {
+  background-color: #E8F5E9;
+  color: #05392E;
+  font-weight: 800;
+  border: 1px solid rgba(5, 57, 46, 0.25) !important;
+  box-shadow:
+    0 6px 16px rgba(5, 57, 46, 0.10),
+    0 2px 0 rgba(5, 57, 46, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Solid 3D AI Core Sphere & Rings */
+.ai-core-sphere {
+  background-color: #05392E;
+  border: 3px solid #25D366;
+  box-shadow:
+    0 20px 48px rgba(5, 57, 46, 0.40),
+    0 0 24px rgba(37, 211, 102, 0.3),
+    inset 0 2px 6px rgba(255, 255, 255, 0.3);
+}
+
+
+@keyframes ai-core-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ai-core-ring {
+  animation: ai-core-rotate 25s linear infinite;
+}
+
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes float-subtle-reverse {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(5px); }
+}
+
+.animate-float-subtle {
+  animation: float-subtle 5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-subtle-reverse 6s ease-in-out infinite;
+}
+
+/* Subtle Halo Pulse for Active Status */
+@keyframes halo-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6); }
+  70% { box-shadow: 0 0 0 8px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
+
+.halo-active {
+  animation: halo-pulse 2.2s infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F7FAF9;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #05392E;
+}

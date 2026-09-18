@@ -1,0 +1,42 @@
+# Dependencies & Environments
+__pycache__/
+*.pyc
+node_modules/
+backend/venv/
+backend/.venv/
+env/
+venv/
+ENV/
+
+# Next.js Build Output
+frontend/.next/
+frontend/out/
+build/
+dist/
+
+# Local Environment Variables & Secrets
+.env
+.env*.local
+backend/.env
+frontend/.env
+
+# SQLite Database & SQLite Locks
+*.db
+*.sqlite
+*.sqlite3
+backend/whatsapp_ai.db
+
+# Executables & Local Tools
+*.exe
+cloudflared.exe
+ngrok.exe
+
+# IDE & OS Files
+.DS_Store
+.vscode/
+.idea/
+*.log
+
+# Scratch Test Scripts
+backend/test_*.py
+backend/update_*.py
