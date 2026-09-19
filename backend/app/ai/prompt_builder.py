@@ -1,4 +1,4 @@
-from app.ai.persona import SYSTEM_RULES, DEFAULT_PERSONA, ROMANTIC_PERSONA
+from app.ai.persona import SYSTEM_RULES, DEFAULT_PERSONA, ROMANTIC_PERSONA, FRIEND_PERSONA, PROFESSIONAL_PERSONA
 
 
 def build_ai_prompt(
@@ -21,27 +21,38 @@ def build_ai_prompt(
 
     rel_lower = (relationship or "").lower()
     tone_lower = (tone or "").lower()
+    lang_lower = (preferred_language or "banglish").lower()
+
+    # Determine script of current message
+    is_bangla_script_msg = any('\u0980' <= char <= '\u09FF' for char in current_message)
 
     # Exact relationship classification
-    is_romantic = any(kw in rel_lower or kw in tone_lower for kw in ["girl", "gf", "romantic", "love", "loving", "flirty"])
-    is_professional = any(kw in rel_lower or kw in tone_lower for kw in ["work", "professional", "boss", "colleague", "lead"])
-    is_friend = any(kw in rel_lower or kw in tone_lower for kw in ["friend", "classmate", "buddy", "funny", "casual"])
+    is_romantic = any(kw in rel_lower or kw in tone_lower or kw in (contact_name or "").lower() for kw in ["girl", "gf", "romantic", "love", "loving", "flirty", "orin", "rio"])
+    is_professional = any(kw in rel_lower or kw in tone_lower or kw in (contact_name or "").lower() for kw in ["work", "professional", "boss", "colleague", "lead", "arif"])
+    is_friend = any(kw in rel_lower or kw in tone_lower for kw in ["friend", "classmate", "buddy", "funny", "casual"]) or not (is_romantic or is_professional)
 
-    persona_section = base_persona
     if is_romantic:
-        persona_section = f"{base_persona}\n\n{ROMANTIC_PERSONA}"
-        relationship_mode_instruction = "MODE: Girlfriend / Romantic Partner. Speak with deep warmth, sweetness, romantic endearments ('jan', 'babu', 'shona', 'tumi'), and affection."
+        selected_persona = f"{base_persona}\n\n{ROMANTIC_PERSONA}"
     elif is_professional:
-        relationship_mode_instruction = "MODE: Professional Work Contact. Speak politely, clearly, respectfully, and professionally. ABSOLUTELY DO NOT use romantic endearments (jan/babu/shona) or informal slang!"
-    elif is_friend:
-        relationship_mode_instruction = "MODE: Friend / Classmate / Gaming Buddy. Speak in a casual, friendly, youth style ('bro', 'kire', 'dost', 'bhai'). ABSOLUTELY DO NOT use romantic endearments (jan/babu/shona)!"
+        selected_persona = f"{base_persona}\n\n{PROFESSIONAL_PERSONA}"
     else:
-        relationship_mode_instruction = "MODE: General Contact. Speak neutrally, politely, and casually. DO NOT use romantic terms."
+        selected_persona = f"{base_persona}\n\n{FRIEND_PERSONA}"
+
+    # Explicit Language Rule for Gemini
+    if is_bangla_script_msg:
+        lang_directive = "MANDATORY OUTPUT LANGUAGE: BENGALI SCRIPT (বাংলা). Reply using proper Bengali script characters!"
+    elif "english" in lang_lower and is_professional:
+        lang_directive = "MANDATORY OUTPUT LANGUAGE: ENGLISH. Reply in clear, natural, professional English."
+    else:
+        lang_directive = "MANDATORY OUTPUT LANGUAGE: BANGLISH (Bangla spoken words written using English/Roman alphabet, e.g. 'kemon acho', 'bhalo achi bro', 'ki korcho jan'). DO NOT reply in plain English!"
 
     system_content = f"""{SYSTEM_RULES}
 
-### SPECIFIC CONTACT RELATIONSHIP MODE:
-{relationship_mode_instruction}
+### MANDATORY OUTPUT LANGUAGE DIRECTIVE:
+{lang_directive}
+
+### CATEGORIZED PERSONA DEFINITION:
+{selected_persona}
 
 ### CONTACT PROFILE:
 - Contact Name: {contact_name}
@@ -60,6 +71,8 @@ def build_ai_prompt(
     if is_photo:
         if is_romantic:
             system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact sent a photo! Compliment her cute/beautiful picture warmly and affectionately as her loving boyfriend 🥰❤️!"
+        elif is_professional:
+            system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact sent an image/file. Acknowledge it professionally."
         else:
             system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact sent a photo! React casually and naturally to the image (e.g. 'joss picture bro!')."
 
