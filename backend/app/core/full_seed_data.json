@@ -10,51 +10,6 @@
       "ai_status": "ACTIVE"
     },
     {
-      "name": "Fahim",
-      "phone": "8801700000002",
-      "relationship": "Classmate",
-      "preferred_language": "Banglish",
-      "preferred_tone": "Casual",
-      "notes": "Group project partner.",
-      "ai_status": "OFF"
-    },
-    {
-      "name": "Sami",
-      "phone": "8801700000003",
-      "relationship": "Friend",
-      "preferred_language": "Banglish",
-      "preferred_tone": "Funny",
-      "notes": "Gaming buddy.",
-      "ai_status": "OFF"
-    },
-    {
-      "name": "Arif",
-      "phone": "8801700000004",
-      "relationship": "Professional",
-      "preferred_language": "English",
-      "preferred_tone": "Professional",
-      "notes": "Software Lead.",
-      "ai_status": "OFF"
-    },
-    {
-      "name": "test user name",
-      "phone": "16315551181",
-      "relationship": "Unknown",
-      "preferred_language": "Banglish",
-      "preferred_tone": "Casual",
-      "notes": null,
-      "ai_status": "OFF"
-    },
-    {
-      "name": "Rakib",
-      "phone": "8801700000001",
-      "relationship": "Unknown",
-      "preferred_language": "Banglish",
-      "preferred_tone": "Casual",
-      "notes": null,
-      "ai_status": "OFF"
-    },
-    {
       "name": "RIO",
       "phone": "8801781354831",
       "relationship": "Girlfriend",
@@ -202,22 +157,6 @@
       "whatsapp_message_id": "wamid.simulated_8801700000001_Kire bro, "
     },
     {
-      "phone": "8801700000002",
-      "sender": "CONTACT",
-      "message": "Kire Fahim, amar assignment sheet ki tor kache ase?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 21:37:10.119113",
-      "whatsapp_message_id": "wamid.simulated_8801700000002_Kire Fahim"
-    },
-    {
-      "phone": "8801700000003",
-      "sender": "CONTACT",
-      "message": "bro aajke pubg khelbi? amra squad dhorbo",
-      "message_type": "text",
-      "timestamp": "2026-09-18 21:40:03.664529",
-      "whatsapp_message_id": "wamid.simulated_8801700000003_bro aajke "
-    },
-    {
       "phone": "8801309605222",
       "sender": "CONTACT",
       "message": "Kire bhai, kal exam er preparation kemon hoitese?",
@@ -232,22 +171,6 @@
       "message_type": "text",
       "timestamp": "2026-09-18 21:45:20.717167",
       "whatsapp_message_id": "wamid.simulated_8801700000001_kire?"
-    },
-    {
-      "phone": "8801700000003",
-      "sender": "AI",
-      "message": "Ha bro chol! Tora abar age age moris na 😭😂 Koytay dukbi bol?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 21:48:37.377261",
-      "whatsapp_message_id": null
-    },
-    {
-      "phone": "8801700000002",
-      "sender": "AI",
-      "message": "bol bro, ki obostha? shuntechi!",
-      "message_type": "text",
-      "timestamp": "2026-09-18 21:48:40.960556",
-      "whatsapp_message_id": null
     },
     {
       "phone": "8801309605222",
@@ -266,22 +189,6 @@
       "whatsapp_message_id": null
     },
     {
-      "phone": "8801700000004",
-      "sender": "CONTACT",
-      "message": "Hey, can you review the latest pull request when you get a chance?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 21:50:48.011299",
-      "whatsapp_message_id": "wamid.simulated_8801700000004_Hey, can y"
-    },
-    {
-      "phone": "8801700000004",
-      "sender": "AI",
-      "message": "Sure, I'll check it out shortly and leave my feedback!",
-      "message_type": "text",
-      "timestamp": "2026-09-18 21:50:52.569208",
-      "whatsapp_message_id": null
-    },
-    {
       "phone": "8801309605222",
       "sender": "CONTACT",
       "message": "hello!!",
@@ -295,46 +202,6 @@
       "message": "Kire bro! Ki obostha? Bol",
       "message_type": "text",
       "timestamp": "2026-09-18 21:52:23.537431",
-      "whatsapp_message_id": null
-    },
-    {
-      "phone": "16315551181",
-      "sender": "CONTACT",
-      "message": "this is a text message",
-      "message_type": "text",
-      "timestamp": "2026-09-18 23:05:00.568469",
-      "whatsapp_message_id": "ABGGFlA5Fpa"
-    },
-    {
-      "phone": "16315551181",
-      "sender": "AI",
-      "message": "Haha haa, dekhlam 😂 Ki obostha bro?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 23:06:30.690559",
-      "whatsapp_message_id": null
-    },
-    {
-      "phone": "8801700000001",
-      "sender": "CONTACT",
-      "message": "Kire bro, koi tui?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 23:54:28.914961",
-      "whatsapp_message_id": "wamid.simulated_8801700000001_1789775668911"
-    },
-    {
-      "phone": "8801700000001",
-      "sender": "CONTACT",
-      "message": "kire bro, kal exam aseh mone achis?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 23:55:59.494655",
-      "whatsapp_message_id": "wamid.simulated_8801700000001_1789775759492"
-    },
-    {
-      "phone": "8801700000001",
-      "sender": "AI",
-      "message": "Basay achi bro. Haan mone ache 😭 Kicchu e toh pori nai ekhono. Tui kotoটুক porli?",
-      "message_type": "text",
-      "timestamp": "2026-09-18 23:56:53.938061",
       "whatsapp_message_id": null
     },
     {

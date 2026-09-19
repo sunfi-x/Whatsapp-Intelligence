@@ -289,9 +289,9 @@ export default function InboxPage() {
       </div>
 
       {/* Two Panel 3D Container */}
-      <div className="card-3d rounded-3xl border border-[#05392E]/15 overflow-hidden flex flex-col lg:flex-row h-[calc(100vh-10rem)] shadow-2xl">
+      <div className="card-3d rounded-3xl border border-[#05392E]/15 overflow-hidden flex flex-col lg:flex-row h-[calc(100vh-8.5rem)] sm:h-[calc(100vh-10rem)] min-h-[500px] max-h-screen shadow-2xl">
         {/* LEFT PANEL: Conversation List */}
-        <div className={`w-full lg:w-96 border-b lg:border-b-0 lg:border-r border-[#E5EAEA] flex-col bg-white shrink-0 ${mobileShowDetail ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`w-full lg:w-96 border-b lg:border-b-0 lg:border-r border-[#E5EAEA] flex-col bg-white shrink-0 min-h-0 h-full ${mobileShowDetail ? 'hidden lg:flex' : 'flex'}`}>
           {/* Search & Filter Top Bar */}
           <div className="p-4 border-b border-[#E5EAEA] space-y-3 bg-[#F7FAF9]">
             <div className="flex items-center gap-2">
@@ -334,7 +334,7 @@ export default function InboxPage() {
           </div>
 
           {/* List Feed */}
-          <div className="flex-1 overflow-y-auto divide-y divide-[#E5EAEA]">
+          <div className="flex-1 overflow-y-auto min-h-0 divide-y divide-[#E5EAEA]">
             {filteredList.length === 0 ? (
               <div className="p-8 text-center text-xs font-semibold text-[#667781]">
                 No conversations found.
@@ -394,7 +394,7 @@ export default function InboxPage() {
         </div>
 
         {/* RIGHT PANEL: Selected Conversation Chat Feed & Action Panel */}
-        <div className={`flex-1 flex-col bg-white ${mobileShowDetail ? 'flex' : 'hidden lg:flex'}`}>
+        <div className={`flex-1 flex-col bg-white min-h-0 h-full overflow-hidden ${mobileShowDetail ? 'flex' : 'hidden lg:flex'}`}>
           {activeContact ? (
             <>
               {/* Conversation Top Header */}
@@ -526,7 +526,7 @@ export default function InboxPage() {
               )}
 
               {/* Chat Feed */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-[#EFEAE2]">
+              <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-4 bg-[#EFEAE2] overscroll-contain">
                 {messages.length === 0 ? (
                   <div className="text-center py-12">
                     <span className="inline-block rounded-2xl bg-white border border-[#E5EAEA] px-4 py-2 text-xs font-semibold text-[#667781] shadow-sm">
