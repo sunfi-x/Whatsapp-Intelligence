@@ -137,7 +137,19 @@ export default function InboxPage() {
 
   useEffect(() => {
     fetchConversations();
-  }, [filter]);
+    const interval = setInterval(() => {
+      fetchConversations();
+      if (selectedId) {
+        getConversationDetails(selectedId)
+          .then((data) => {
+            setMessages(data.messages);
+            setPendingReply(data.pending_reply);
+          })
+          .catch(console.error);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [filter, selectedId, fetchConversations]);
 
   const loadConversationDetail = async (id: number, convList?: Conversation[]) => {
     setDetailLoading(true);
