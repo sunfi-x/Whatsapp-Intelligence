@@ -60,7 +60,7 @@ class AIEngine:
                 "contents": merged_contents,
                 "generationConfig": {
                     "temperature": 0.75,
-                    "maxOutputTokens": 250,
+                    "maxOutputTokens": 1000,
                 }
             }
             if system_text.strip():
