@@ -67,20 +67,25 @@ export function SecurityGate({ children }: { children: React.ReactNode }) {
             </p>
           </div>
 
-          {/* Sensitive Data & Contact Notice Box */}
-          <div className="rounded-2xl p-4 bg-[#F0FDF4] border border-[#25D366]/30 text-left space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#05392E] flex items-center gap-1.5">
+          {/* Detailed Credentials & Cause Notice Box */}
+          <div className="rounded-2xl p-4 bg-[#F0FDF4] border border-[#25D366]/30 text-left space-y-3">
+            <div className="flex items-center justify-between border-b border-[#25D366]/20 pb-2">
+              <span className="text-xs font-extrabold text-[#05392E] flex items-center gap-1.5">
                 <ShieldCheck className="h-4 w-4 text-[#25D366]" />
-                Private & Sensitive Personal Data Notice
+                System Credentials & Privacy Notice
               </span>
             </div>
+            
             <p className="text-xs font-medium text-[#2E4F46] leading-relaxed">
-              This dashboard contains sensitive personal WhatsApp conversations, contact details, and live AI model controls. 
+              This Command Center manages live <strong>Meta WhatsApp Cloud API integrations</strong>, private <strong>Google Gemini AI API keys</strong>, sensitive contact logs, and persona configurations.
             </p>
-            <p className="text-[11px] font-semibold text-[#05392E] leading-relaxed pt-1 border-t border-[#25D366]/20">
-              💡 For evaluation, audit, or development access, please contact Sunfi to request the passcode PIN.
-            </p>
+            
+            <div className="p-3 rounded-xl bg-white/80 border border-[#25D366]/20 text-[11px] text-[#05392E] space-y-1">
+              <p className="font-bold text-[#05392E]">Need access for evaluation or development?</p>
+              <p className="text-[#33554B] font-medium leading-relaxed">
+                If you need access for testing, custom AI system development, or technical review, feel free to contact me to receive the Passcode PIN.
+              </p>
+            </div>
           </div>
 
           {/* Unlock PIN Form */}
@@ -119,11 +124,11 @@ export function SecurityGate({ children }: { children: React.ReactNode }) {
               🔒 End-to-end Encrypted System
             </span>
             <a 
-              href="mailto:sazzad.sunfi@gmail.com?subject=WhatsApp%20Intelligence%20Access%20PIN%20Request" 
-              className="inline-flex items-center gap-1 text-[#05392E] font-bold hover:underline"
+              href="mailto:sunfisazzad@gmail.com?subject=WhatsApp%20Intelligence%20Access%20PIN%20Request" 
+              className="inline-flex items-center gap-1.5 text-[#05392E] font-bold hover:underline bg-[#E8F5E9] px-2.5 py-1 rounded-lg border border-[#05392E]/10"
             >
               <Mail className="h-3.5 w-3.5 text-[#25D366]" />
-              <span>Contact Sunfi for PIN</span>
+              <span>Request PIN: sunfisazzad@gmail.com</span>
             </a>
           </div>
 
