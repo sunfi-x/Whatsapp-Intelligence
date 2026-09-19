@@ -398,34 +398,37 @@ export default function InboxPage() {
           {activeContact ? (
             <>
               {/* Conversation Top Header */}
-              <div className="px-4 sm:px-6 py-3 border-b border-[#E5EAEA] bg-white flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2.5">
+              <div className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-[#E5EAEA] bg-white flex items-center justify-between gap-2 shrink-0 overflow-hidden">
+                {/* Left: back + avatar + name — flex-1 min-w-0 to allow truncation */}
+                <div className="flex items-center gap-2 flex-1 min-w-0">
                   <button
                     onClick={() => setMobileShowDetail(false)}
-                    className="lg:hidden p-2 rounded-xl bg-[#E8F5E9] text-[#05392E] font-bold text-xs flex items-center gap-1 shrink-0"
+                    className="lg:hidden p-1.5 rounded-xl bg-[#E8F5E9] text-[#05392E] font-bold text-xs flex items-center gap-1 shrink-0"
                     title="Back to inbox list"
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </button>
-                  <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-full bg-[#05392E] border border-[#03241D] flex items-center justify-center font-extrabold text-white text-sm sm:text-base shadow-sm shrink-0">
+                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-[#05392E] border border-[#03241D] flex items-center justify-center font-extrabold text-white text-sm sm:text-base shadow-sm shrink-0">
                     {activeContact.contact.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-extrabold text-xs sm:text-sm text-[#111B21] truncate">{activeContact.contact.name}</h3>
-                    <span className="text-[11px] sm:text-xs font-medium text-[#667781] block truncate">
-                      <span className="font-digits">{activeContact.contact.phone}</span> • {activeContact.contact.relationship}
+                    <h3 className="font-extrabold text-sm text-[#111B21] truncate">{activeContact.contact.name}</h3>
+                    <span className="text-[10px] font-medium text-[#667781] block truncate">
+                      <span className="font-digits">{activeContact.contact.phone}</span>
+                      <span className="hidden xs:inline"> • {activeContact.contact.relationship}</span>
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2.5">
+                {/* Right: actions — shrink-0 so they don't compress */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
                   <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="p-2 rounded-xl bg-[#F7FAF9] border border-[#E5EAEA] text-[#05392E] hover:bg-[#E8F5E9] transition shadow-sm"
+                    className="p-1.5 rounded-xl bg-[#F7FAF9] border border-[#E5EAEA] text-[#05392E] hover:bg-[#E8F5E9] transition shadow-sm shrink-0"
                     title="Refresh Chat Messages"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
                   </button>
 
                   <StatusBadge status={activeContact.contact.ai_status} />
@@ -433,18 +436,18 @@ export default function InboxPage() {
                     <button
                       onClick={() => act(() => turnOffAI(activeContact.contact.id))}
                       disabled={actionLoading}
-                      className="btn-3d-danger px-3 py-1.5 rounded-xl text-xs font-extrabold flex items-center gap-1.5"
+                      className="btn-3d-danger px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-extrabold flex items-center gap-1 sm:gap-1.5 shrink-0"
                     >
-                      <Power className="h-3.5 w-3.5" />
-                      <span>Turn Off AI</span>
+                      <Power className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      <span className="hidden sm:inline">Turn Off AI</span>
                     </button>
                   )}
                   <Link
                     href={`/conversations/${activeContact.contact.id}`}
-                    className="btn-3d-secondary px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5"
+                    className="btn-3d-secondary p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 sm:gap-1.5 shrink-0"
                   >
-                    <span>Full Screen</span>
                     <ArrowRight className="h-3.5 w-3.5 text-[#05392E]" />
+                    <span className="hidden sm:inline">Full Screen</span>
                   </Link>
                 </div>
               </div>
