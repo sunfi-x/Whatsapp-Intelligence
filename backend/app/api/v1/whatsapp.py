@@ -27,6 +27,20 @@ async def verify_whatsapp_webhook(
     raise HTTPException(status_code=403, detail="Verification token mismatch")
 
 
+from datetime import datetime, timezone
+
+# Memory log buffer for troubleshooting Meta webhooks
+RECEIVED_WEBHOOK_LOGS: list[dict] = []
+
+@router.get("/webhook-logs")
+async def get_webhook_logs():
+    """Returns the last 20 raw webhook payloads received from Meta Cloud API."""
+    return {
+        "count": len(RECEIVED_WEBHOOK_LOGS),
+        "logs": RECEIVED_WEBHOOK_LOGS[-20:]
+    }
+
+
 @router.post("/webhook")
 async def handle_whatsapp_webhook(request: Request, db: AsyncSession = Depends(get_db)):
     """Meta WhatsApp Cloud API Webhook Payload Ingestion Endpoint."""
@@ -34,6 +48,14 @@ async def handle_whatsapp_webhook(request: Request, db: AsyncSession = Depends(g
         payload = await request.json()
         logger.info(f"Incoming WhatsApp Webhook Payload: {payload}")
         
+        # Log to debug buffer with timestamp
+        RECEIVED_WEBHOOK_LOGS.append({
+            "received_at": datetime.now(timezone.utc).isoformat(),
+            "payload": payload
+        })
+        if len(RECEIVED_WEBHOOK_LOGS) > 50:
+            RECEIVED_WEBHOOK_LOGS.pop(0)
+
         parsed_msgs = parse_whatsapp_webhook_payload(payload)
         results = []
         for msg in parsed_msgs:
