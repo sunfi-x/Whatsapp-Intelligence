@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Bot } from 'lucide-react';
+import { Bot, Lock } from 'lucide-react';
 import { StopAllAiButton } from './StopAllAiButton';
 
 interface NavbarProps {
@@ -10,6 +10,11 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onRefresh }) => {
+  const handleLockSession = () => {
+    sessionStorage.removeItem('sunfi_authenticated');
+    window.location.reload();
+  };
+
   return (
     <header className="sticky top-2 sm:top-3 z-40 mx-2 sm:mx-4 md:mx-6 my-1.5 sm:my-2">
       <div className="glass-header rounded-2xl h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6">
@@ -32,14 +37,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onRefresh }) => {
         </div>
 
         {/* Right Actions & Status */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          <div className="hidden sm:flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E8F5E9] border border-[#05392E]/25 text-xs font-extrabold text-[#05392E] shadow-sm">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#E8F5E9] border border-[#05392E]/25 text-xs font-extrabold text-[#05392E] shadow-sm">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#25D366] opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#25D366]"></span>
             </span>
             <span>AI System Online</span>
           </div>
+
+          <button
+            onClick={handleLockSession}
+            title="Lock Dashboard Session"
+            className="px-3 py-1.5 rounded-xl bg-[#F7FAF9] border border-[#E5EAEA] hover:border-[#05392E] text-xs font-extrabold text-[#111B21] flex items-center gap-1.5 transition shadow-sm"
+          >
+            <Lock className="h-3.5 w-3.5 text-[#05392E]" />
+            <span className="hidden md:inline">Lock</span>
+          </button>
 
           <StopAllAiButton onSuccess={onRefresh} />
         </div>

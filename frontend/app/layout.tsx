@@ -3,6 +3,7 @@ import { Quicksand, Mochiy_Pop_P_One } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 import { Sidebar } from '@/components/Sidebar';
+import { SecurityGate } from '@/components/SecurityGate';
 
 const quicksand = Quicksand({
   subsets: ['latin'],
@@ -27,15 +28,17 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${quicksand.variable} ${mochiyPopPOne.variable}`}>
       <body className={`${quicksand.className} min-h-screen antialiased bg-[#F7FAF9] text-[#111B21] relative pb-20 md:pb-0`}>
-        <div className="flex min-h-screen flex-col">
-          <Navbar />
-          <div className="flex flex-1">
-            <Sidebar />
-            <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto">
-              {children}
-            </main>
+        <SecurityGate>
+          <div className="flex min-h-screen flex-col">
+            <Navbar />
+            <div className="flex flex-1">
+              <Sidebar />
+              <main className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
+        </SecurityGate>
       </body>
     </html>
   );
