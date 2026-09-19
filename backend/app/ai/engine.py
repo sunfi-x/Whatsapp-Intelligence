@@ -149,8 +149,8 @@ class AIEngine:
             elif role == "user":
                 last_msg = content.lower()
 
-        is_romantic = "is girlfriend / romantic: yes" in system_context or "contact name: rio" in system_context or "contact name: orin" in system_context
-        is_professional = "relationship type: professional" in system_context or "contact name: arif" in system_context
+        is_romantic = "[explicit_contact_mode: romantic_girlfriend]" in system_context
+        is_professional = "[explicit_contact_mode: professional_work]" in system_context
         is_bangla_script = any('\u0980' <= char <= '\u09FF' for char in last_msg)
         is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami", "kire"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good", "wish", "suicide", "attempt", "die", "review", "pull", "request"])
 

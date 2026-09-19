@@ -33,10 +33,13 @@ def build_ai_prompt(
 
     if is_romantic:
         selected_persona = f"{base_persona}\n\n{ROMANTIC_PERSONA}"
+        mode_tag = "[EXPLICIT_CONTACT_MODE: ROMANTIC_GIRLFRIEND]"
     elif is_professional:
         selected_persona = f"{base_persona}\n\n{PROFESSIONAL_PERSONA}"
+        mode_tag = "[EXPLICIT_CONTACT_MODE: PROFESSIONAL_WORK]"
     else:
         selected_persona = f"{base_persona}\n\n{FRIEND_PERSONA}"
+        mode_tag = "[EXPLICIT_CONTACT_MODE: FRIEND_CLASSMATE]"
 
     # Explicit Language Rule for Gemini
     if is_bangla_script_msg:
@@ -48,6 +51,8 @@ def build_ai_prompt(
 
     system_content = f"""{SYSTEM_RULES}
 
+{mode_tag}
+
 ### MANDATORY OUTPUT LANGUAGE DIRECTIVE:
 {lang_directive}
 
@@ -56,7 +61,7 @@ def build_ai_prompt(
 
 ### CONTACT PROFILE:
 - Contact Name: {contact_name}
-- Relationship Type: {relationship} (Is Girlfriend / Romantic: {'YES' if is_romantic else 'NO'})
+- Relationship Type: {relationship}
 - Preferred Language: {preferred_language}
 - Target Tone: {tone}
 - Contact Notes: {notes or 'None'}
