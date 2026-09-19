@@ -133,21 +133,37 @@ export default function InboxPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, selectedId]);
 
+  // Background polling for fresh messages without UI flicker or scroll jumps
   useEffect(() => {
     fetchConversations();
-    const interval = setInterval(() => {
-      fetchConversations();
-      if (selectedId) {
-        getConversationDetails(selectedId)
-          .then((data) => {
-            setMessages(data.messages);
-            setPendingReply(data.pending_reply);
-          })
-          .catch(console.error);
+    const interval = setInterval(async () => {
+      try {
+        const freshConvs = await getConversations(filter);
+        setConversations(freshConvs);
+
+        if (selectedId) {
+          const detail = await getConversationDetails(selectedId);
+          setMessages((prevMsgs) => {
+            const isDifferent =
+              prevMsgs.length !== detail.messages.length ||
+              (prevMsgs.length > 0 &&
+                detail.messages.length > 0 &&
+                prevMsgs[prevMsgs.length - 1].id !== detail.messages[detail.messages.length - 1].id);
+            return isDifferent ? detail.messages : prevMsgs;
+          });
+
+          setPendingReply((prevPending) => {
+            const isDiff = JSON.stringify(prevPending) !== JSON.stringify(detail.pending_reply);
+            return isDiff ? detail.pending_reply : prevPending;
+          });
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
       }
-    }, 5000);
+    }, 4000);
+
     return () => clearInterval(interval);
   }, [filter, selectedId, fetchConversations]);
 
