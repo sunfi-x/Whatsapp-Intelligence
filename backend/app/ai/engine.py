@@ -123,7 +123,7 @@ class AIEngine:
             elif m.get("role") == "system":
                 system_context = m.get("content", "").lower()
 
-        is_romantic = any(kw in system_context for kw in ["romantic", "girl", "love", "gf"])
+        is_romantic = "is romantic partner: yes" in system_context
 
         if is_romantic:
             if any(w in last_msg for w in ["khiyecho", "khabar", "kheyeso", "ate", "khaba"]):
