@@ -20,6 +20,7 @@ export default function InboxPage() {
   const [filter, setFilter] = useState<'ALL' | AIStatus>('ALL');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
@@ -37,7 +38,8 @@ export default function InboxPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedTone, setSelectedTone] = useState('Casual');
 
-  const fetchConversations = async () => {
+  const fetchConversations = async (quiet = false) => {
+    if (!quiet) setIsRefreshing(true);
     try {
       const data = await getConversations(filter);
       setConversations(data);
@@ -48,6 +50,7 @@ export default function InboxPage() {
       console.error(e);
     } finally {
       setLoading(false);
+      if (!quiet) setIsRefreshing(false);
     }
   };
 
@@ -79,12 +82,21 @@ export default function InboxPage() {
     }
   }, [selectedId, conversations]);
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchConversations(true);
+    if (selectedId) {
+      await loadConversationDetail(selectedId);
+    }
+    setIsRefreshing(false);
+  };
+
   const act = async (fn: () => Promise<any>) => {
     setActionLoading(true);
     try {
       await fn();
-      fetchConversations();
-      if (selectedId) loadConversationDetail(selectedId);
+      await fetchConversations(true);
+      if (selectedId) await loadConversationDetail(selectedId);
     } catch (e: any) {
       alert(e.response?.data?.detail || 'Action failed');
     } finally {
@@ -99,8 +111,8 @@ export default function InboxPage() {
     try {
       await sendManualMessage(selectedId, inputMsg);
       setInputMsg('');
-      fetchConversations();
-      loadConversationDetail(selectedId);
+      await fetchConversations(true);
+      await loadConversationDetail(selectedId);
     } catch (e: any) {
       alert(e.response?.data?.detail || 'Send failed');
     } finally {
@@ -124,6 +136,14 @@ export default function InboxPage() {
             Two-panel WhatsApp AI conversation workspace.
           </p>
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="btn-3d-secondary px-4 py-2 rounded-2xl text-xs font-extrabold flex items-center gap-2 self-start sm:self-auto shadow-sm hover:scale-[1.02] transition-transform"
+        >
+          <RefreshCw className={`h-4 w-4 text-[#05392E] ${isRefreshing ? 'animate-spin' : ''}`} />
+          <span>{isRefreshing ? 'Refreshing...' : 'Refresh Inbox'}</span>
+        </button>
       </div>
 
       {/* Two Panel 3D Container */}
@@ -132,15 +152,25 @@ export default function InboxPage() {
         <div className={`w-full lg:w-96 border-b lg:border-b-0 lg:border-r border-[#E5EAEA] flex-col bg-white shrink-0 ${mobileShowDetail ? 'hidden lg:flex' : 'flex'}`}>
           {/* Search & Filter Top Bar */}
           <div className="p-4 border-b border-[#E5EAEA] space-y-3 bg-[#F7FAF9]">
-            <div className="relative">
-              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#667781]" />
-              <input
-                type="text"
-                placeholder="Search contact or phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-2xl border border-[#E5EAEA] bg-white pl-10 pr-4 py-2 text-xs font-bold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner"
-              />
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-[#667781]" />
+                <input
+                  type="text"
+                  placeholder="Search contact or phone..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-2xl border border-[#E5EAEA] bg-white pl-10 pr-4 py-2 text-xs font-bold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner"
+                />
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="p-2.5 rounded-2xl bg-white border border-[#E5EAEA] text-[#05392E] hover:bg-[#E8F5E9] shadow-sm transition shrink-0"
+                title="Refresh Conversations & Messages"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </button>
             </div>
 
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
@@ -246,7 +276,16 @@ export default function InboxPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    className="p-2 rounded-xl bg-[#F7FAF9] border border-[#E5EAEA] text-[#05392E] hover:bg-[#E8F5E9] transition shadow-sm"
+                    title="Refresh Chat Messages"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </button>
+
                   <StatusBadge status={activeContact.contact.ai_status} />
                   {activeContact.contact.ai_status === 'ACTIVE' && (
                     <button
