@@ -1,5 +1,6 @@
 import logging
 from pydantic import BaseModel
+from app.utils.phone import normalize_phone_number
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                 # Create profile map from Meta contacts array (normalizing wa_id)
                 contact_map = {}
                 for contact in contacts:
-                    wa_id = str(contact.get("wa_id", "")).replace("+", "").replace(" ", "").strip()
+                    wa_id = normalize_phone_number(contact.get("wa_id", ""))
                     profile_name = contact.get("profile", {}).get("name", "").strip()
                     if wa_id and profile_name:
                         contact_map[wa_id] = profile_name
@@ -40,7 +41,7 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                     msg_type = msg.get("type", "text")
                     msg_id = msg.get("id", "")
                     raw_from = str(msg.get("from", "")).strip()
-                    from_phone = raw_from.replace("+", "").replace(" ", "").strip()
+                    from_phone = normalize_phone_number(raw_from) or raw_from.replace("+", "").replace(" ", "").strip()
                     
                     # Extract real profile name if present in webhook
                     sender_name = contact_map.get(from_phone) or contact_map.get(raw_from) or f"Contact ({from_phone})"
@@ -92,6 +93,18 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                                 whatsapp_message_id=msg_id,
                                 timestamp=str(msg.get("timestamp", "")),
                                 caption=caption
+                            )
+                        )
+                    else:
+                        text_repr = f"[{msg_type.upper()} message received]"
+                        parsed_messages.append(
+                            ParsedWhatsAppMessage(
+                                sender_phone=from_phone,
+                                sender_name=sender_name,
+                                message_text=text_repr,
+                                message_type=msg_type,
+                                whatsapp_message_id=msg_id,
+                                timestamp=str(msg.get("timestamp", ""))
                             )
                         )
     except Exception as exc:

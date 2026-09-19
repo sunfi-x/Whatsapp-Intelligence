@@ -13,20 +13,40 @@ from app.ai.prompt_builder import build_ai_prompt
 from app.ai.engine import ai_engine
 from app.whatsapp.client import whatsapp_client
 
+from app.utils.phone import normalize_phone_number
+
 logger = logging.getLogger(__name__)
 
 
 async def get_or_create_contact(db: AsyncSession, phone: str, name: str = "Unknown") -> Contact:
-    """Finds or creates a contact by phone number and updates WhatsApp profile name dynamically."""
-    result = await db.execute(select(Contact).where(Contact.phone == phone))
+    """Finds or creates a contact by phone number with robust normalization and suffix matching."""
+    clean_phone = normalize_phone_number(phone)
+    
+    # 1. Search exact match with clean_phone
+    result = await db.execute(select(Contact).where(Contact.phone == clean_phone))
     contact = result.scalar_one_or_none()
     
+    # 2. Search fallback: match by raw phone string
+    if not contact:
+        res_raw = await db.execute(select(Contact).where(Contact.phone == phone))
+        contact = res_raw.scalar_one_or_none()
+        
+    # 3. Search fallback: match by last 10 digits suffix
+    if not contact and len(clean_phone) >= 10:
+        suffix = clean_phone[-10:]
+        all_res = await db.execute(select(Contact))
+        for c in all_res.scalars().all():
+            c_norm = normalize_phone_number(c.phone)
+            if c_norm.endswith(suffix):
+                contact = c
+                break
+
     real_profile_name = name.strip() if name and name.strip() and not name.startswith("Contact (") and name != "Unknown" else None
 
     if not contact:
         contact = Contact(
-            name=real_profile_name or f"Contact ({phone[-4:] if len(phone)>=4 else phone})",
-            phone=phone,
+            name=real_profile_name or f"Contact ({clean_phone[-4:] if len(clean_phone)>=4 else clean_phone})",
+            phone=clean_phone,
             relationship="Unknown",
             preferred_language="Banglish",
             preferred_tone="Casual",
@@ -37,9 +57,15 @@ async def get_or_create_contact(db: AsyncSession, phone: str, name: str = "Unkno
         await db.refresh(contact)
         await get_or_create_memory(db, contact.id)
     else:
+        # Ensure contact's stored phone is normalized
+        if contact.phone != clean_phone:
+            contact.phone = clean_phone
+            await db.commit()
+            await db.refresh(contact)
+
         # Automatically update contact name if WhatsApp profile name is provided
         if real_profile_name and contact.name != real_profile_name:
-            logger.info(f"Updating WhatsApp Profile Name for {phone}: '{contact.name}' -> '{real_profile_name}'")
+            logger.info(f"Updating WhatsApp Profile Name for {clean_phone}: '{contact.name}' -> '{real_profile_name}'")
             contact.name = real_profile_name
             await db.commit()
             await db.refresh(contact)

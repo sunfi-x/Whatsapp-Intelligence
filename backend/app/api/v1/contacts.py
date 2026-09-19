@@ -7,6 +7,8 @@ from app.models.contact import Contact
 from app.schemas.contact import ContactRead, ContactCreate, ContactUpdate
 from app.services.memory_service import get_or_create_memory
 
+from app.utils.phone import normalize_phone_number
+
 router = APIRouter(prefix="/contacts", tags=["Contacts"])
 
 
@@ -18,11 +20,14 @@ async def list_contacts(db: AsyncSession = Depends(get_db)):
 
 @router.post("", response_model=ContactRead)
 async def create_contact(contact_in: ContactCreate, db: AsyncSession = Depends(get_db)):
-    existing = await db.execute(select(Contact).where(Contact.phone == contact_in.phone))
+    clean_phone = normalize_phone_number(contact_in.phone)
+    existing = await db.execute(select(Contact).where(Contact.phone == clean_phone))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Contact with this phone number already exists")
 
-    contact = Contact(**contact_in.model_dump())
+    data = contact_in.model_dump()
+    data["phone"] = clean_phone
+    contact = Contact(**data)
     db.add(contact)
     await db.commit()
     await db.refresh(contact)
