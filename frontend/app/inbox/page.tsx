@@ -167,20 +167,27 @@ export default function InboxPage() {
     return () => clearInterval(interval);
   }, [filter, selectedId, fetchConversations]);
 
-  const loadConversationDetail = async (id: number, convList?: Conversation[]) => {
+  const loadConversationDetail = async (id: number) => {
     setDetailLoading(true);
     try {
       const data = await getConversationDetails(id);
-      setMessages(data.messages);
-      setPendingReply(data.pending_reply);
+      setMessages(data.messages || []);
+      setPendingReply(data.pending_reply || null);
       if (data.pending_reply) {
         setEditedText(data.pending_reply.edited_reply || data.pending_reply.generated_reply || '');
       }
-      const list = convList ?? conversations;
-      const match = list.find((c) => c.contact.id === id);
-      if (match) setActiveContact(match);
+      if (data.contact) {
+        const lastMsg = data.messages && data.messages.length > 0 ? data.messages[data.messages.length - 1] : null;
+        setActiveContact({
+          contact: data.contact,
+          last_message: lastMsg,
+          pending_reply: data.pending_reply || null,
+          total_messages: data.messages ? data.messages.length : 0,
+          updated_at: data.contact.updated_at || new Date().toISOString()
+        });
+      }
     } catch (e) {
-      console.error(e);
+      console.error('Error loading conversation detail:', e);
     } finally {
       setDetailLoading(false);
     }
@@ -201,9 +208,9 @@ export default function InboxPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      const freshConvs = await fetchConversations() as Conversation[];
+      await fetchConversations();
       if (selectedId) {
-        await loadConversationDetail(selectedId, freshConvs);
+        await loadConversationDetail(selectedId);
       }
     } finally {
       setIsRefreshing(false);
@@ -214,8 +221,8 @@ export default function InboxPage() {
     setActionLoading(true);
     try {
       await fn();
-      const freshConvs = await fetchConversations() as Conversation[];
-      if (selectedId) await loadConversationDetail(selectedId, freshConvs);
+      await fetchConversations();
+      if (selectedId) await loadConversationDetail(selectedId);
     } catch (e: any) {
       alert(e.response?.data?.detail || 'Action failed');
     } finally {
@@ -231,8 +238,8 @@ export default function InboxPage() {
     try {
       await sendManualMessage(selectedId, inputMsg);
       setInputMsg('');
-      const freshConvs = (await fetchConversations()) as Conversation[];
-      await loadConversationDetail(selectedId, freshConvs);
+      await fetchConversations();
+      await loadConversationDetail(selectedId);
     } catch (e: any) {
       alert(e.response?.data?.detail || 'Send failed');
     } finally {
