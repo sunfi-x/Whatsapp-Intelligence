@@ -2,10 +2,11 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile, ArrowDown, ChevronDown } from 'lucide-react';
+import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile, ArrowDown } from 'lucide-react';
 import { Conversation, AIStatus, Message, AIReply } from '@/lib/types';
 import { getConversations, getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useNavbarVisibility } from '@/components/NavbarVisibilityContext';
 
 // Renders message content based on message_type
 function MessageContent({ message, message_type }: { message: string; message_type: string }) {
@@ -109,9 +110,15 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [mobileShowDetail, setMobileShowDetailState] = useState(false);
+  const { setHiddenOnMobile } = useNavbarVisibility();
 
-  // Selected conversation detail state for right panel
+  // When switching between list ↔ detail on mobile, toggle the global Navbar
+  const setMobileShowDetail = (value: boolean) => {
+    setMobileShowDetailState(value);
+    setHiddenOnMobile(value); // hide global Navbar when detail is open
+  };
+
   const [activeContact, setActiveContact] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [pendingReply, setPendingReply] = useState<AIReply | null>(null);
@@ -219,6 +226,13 @@ export default function InboxPage() {
       chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
+
+  // Restore navbar when leaving inbox page
+  useEffect(() => {
+    return () => {
+      setHiddenOnMobile(false);
+    };
+  }, [setHiddenOnMobile]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -397,57 +411,61 @@ export default function InboxPage() {
         <div className={`flex-1 flex-col bg-white min-h-0 h-full ${mobileShowDetail ? 'flex' : 'hidden lg:flex'}`}>
           {activeContact ? (
             <>
-              {/* Conversation Top Header */}
-              <div className="px-3 sm:px-6 py-2.5 sm:py-3 border-b border-[#E5EAEA] bg-white flex items-center justify-between gap-2 shrink-0 overflow-hidden">
-                {/* Left: back + avatar + name — flex-1 min-w-0 to allow truncation */}
+              {/* Conversation Top Header — green WhatsApp-style bar on mobile */}
+              <div className={`flex items-center justify-between gap-2 shrink-0 overflow-hidden px-3 py-2.5 sm:px-6 sm:py-3 border-b border-[#E5EAEA] ${mobileShowDetail ? 'sticky top-0 z-30 bg-[#05392E] lg:bg-white' : 'bg-white'}`}>
+                {/* Left: back + avatar + name */}
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <button
                     onClick={() => setMobileShowDetail(false)}
-                    className="lg:hidden p-1.5 rounded-xl bg-[#E8F5E9] text-[#05392E] font-bold text-xs flex items-center gap-1 shrink-0"
+                    className={`lg:hidden p-1.5 rounded-xl font-bold flex items-center shrink-0 transition ${mobileShowDetail ? 'text-white hover:bg-white/15' : 'bg-[#E8F5E9] text-[#05392E]'}`}
                     title="Back to inbox list"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-5 w-5" />
                   </button>
-                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-[#05392E] border border-[#03241D] flex items-center justify-center font-extrabold text-white text-sm sm:text-base shadow-sm shrink-0">
+                  <div className={`h-9 w-9 rounded-full border-2 flex items-center justify-center font-extrabold text-sm shadow-sm shrink-0 ${mobileShowDetail ? 'bg-white/20 border-white/50 text-white lg:bg-[#05392E] lg:border-[#03241D]' : 'bg-[#05392E] border-[#03241D] text-white'}`}>
                     {activeContact.contact.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-extrabold text-sm text-[#111B21] truncate">{activeContact.contact.name}</h3>
-                    <span className="text-[10px] font-medium text-[#667781] block truncate">
-                      <span className="font-digits">{activeContact.contact.phone}</span>
-                      <span className="hidden xs:inline"> • {activeContact.contact.relationship}</span>
+                    <h3 className={`font-extrabold text-sm truncate ${mobileShowDetail ? 'text-white lg:text-[#111B21]' : 'text-[#111B21]'}`}>
+                      {activeContact.contact.name}
+                    </h3>
+                    <span className={`text-[10px] font-medium block truncate ${mobileShowDetail ? 'text-white/70 lg:text-[#667781]' : 'text-[#667781]'}`}>
+                      {activeContact.contact.relationship} • {activeContact.contact.ai_status === 'ACTIVE' ? '● AI Active' : activeContact.contact.ai_status === 'PENDING' ? '◌ Pending' : '○ AI Off'}
                     </span>
                   </div>
                 </div>
 
-                {/* Right: actions — shrink-0 so they don't compress */}
-                <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                {/* Right: actions */}
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <button
                     onClick={handleRefresh}
                     disabled={isRefreshing}
-                    className="p-1.5 rounded-xl bg-[#F7FAF9] border border-[#E5EAEA] text-[#05392E] hover:bg-[#E8F5E9] transition shadow-sm shrink-0"
-                    title="Refresh Chat Messages"
+                    className={`p-1.5 rounded-xl transition shrink-0 ${mobileShowDetail ? 'text-white hover:bg-white/15 lg:bg-[#F7FAF9] lg:border lg:border-[#E5EAEA] lg:text-[#05392E]' : 'bg-[#F7FAF9] border border-[#E5EAEA] text-[#05392E] hover:bg-[#E8F5E9]'}`}
+                    title="Refresh"
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                   </button>
 
-                  <StatusBadge status={activeContact.contact.ai_status} />
+                  <span className="hidden lg:block"><StatusBadge status={activeContact.contact.ai_status} /></span>
+
                   {activeContact.contact.ai_status === 'ACTIVE' && (
                     <button
                       onClick={() => act(() => turnOffAI(activeContact.contact.id))}
                       disabled={actionLoading}
-                      className="btn-3d-danger px-2 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-extrabold flex items-center gap-1 sm:gap-1.5 shrink-0"
+                      className={`p-1.5 rounded-xl font-extrabold flex items-center shrink-0 transition ${mobileShowDetail ? 'bg-red-500/80 text-white border border-red-400/50 hover:bg-red-500 lg:btn-3d-danger' : 'btn-3d-danger px-2 py-1'}`}
                     >
-                      <Power className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                      <span className="hidden sm:inline">Turn Off AI</span>
+                      <Power className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline ml-1">Turn Off AI</span>
                     </button>
                   )}
+
                   <Link
                     href={`/conversations/${activeContact.contact.id}`}
-                    className="btn-3d-secondary p-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 sm:gap-1.5 shrink-0"
+                    className={`p-1.5 rounded-xl font-bold flex items-center shrink-0 transition ${mobileShowDetail ? 'text-white hover:bg-white/15 lg:btn-3d-secondary' : 'btn-3d-secondary'}`}
+                    title="Full Screen"
                   >
-                    <ArrowRight className="h-3.5 w-3.5 text-[#05392E]" />
-                    <span className="hidden sm:inline">Full Screen</span>
+                    <ArrowRight className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">Full Screen</span>
                   </Link>
                 </div>
               </div>

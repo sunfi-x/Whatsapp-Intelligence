@@ -4,19 +4,22 @@ import React from 'react';
 import Link from 'next/link';
 import { Bot, Lock } from 'lucide-react';
 import { StopAllAiButton } from './StopAllAiButton';
+import { useNavbarVisibility } from './NavbarVisibilityContext';
 
 interface NavbarProps {
   onRefresh?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onRefresh }) => {
+  const { hiddenOnMobile } = useNavbarVisibility();
+
   const handleLockSession = () => {
     sessionStorage.removeItem('sunfi_authenticated');
     window.location.reload();
   };
 
   return (
-    <header className="sticky top-2 sm:top-3 z-40 mx-2 sm:mx-4 md:mx-6 my-1.5 sm:my-2">
+    <header className={`sticky top-2 sm:top-3 z-40 mx-2 sm:mx-4 md:mx-6 my-1.5 sm:my-2 ${hiddenOnMobile ? 'hidden lg:block' : 'block'}`}>
       <div className="glass-header rounded-2xl h-12 sm:h-16 flex items-center justify-between px-3 sm:px-6 overflow-hidden gap-2">
         {/* Left Brand — min-w-0 prevents overflow */}
         <div className="flex items-center gap-2 min-w-0 shrink">
