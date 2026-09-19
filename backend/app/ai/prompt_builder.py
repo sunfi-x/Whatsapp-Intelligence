@@ -19,23 +19,33 @@ def build_ai_prompt(
     base_persona = persona_override if persona_override and persona_override.strip() else DEFAULT_PERSONA
     tone = tone_override if tone_override else preferred_tone
 
-    # Check if contact is Girlfriend or Romantic / Loving
     rel_lower = (relationship or "").lower()
     tone_lower = (tone or "").lower()
+
+    # Exact relationship classification
     is_romantic = any(kw in rel_lower or kw in tone_lower for kw in ["girl", "gf", "romantic", "love", "loving", "flirty"])
+    is_professional = any(kw in rel_lower or kw in tone_lower for kw in ["work", "professional", "boss", "colleague", "lead"])
+    is_friend = any(kw in rel_lower or kw in tone_lower for kw in ["friend", "classmate", "buddy", "funny", "casual"])
 
     persona_section = base_persona
     if is_romantic:
         persona_section = f"{base_persona}\n\n{ROMANTIC_PERSONA}"
+        relationship_mode_instruction = "MODE: Girlfriend / Romantic Partner. Speak with deep warmth, sweetness, romantic endearments ('jan', 'babu', 'shona', 'tumi'), and affection."
+    elif is_professional:
+        relationship_mode_instruction = "MODE: Professional Work Contact. Speak politely, clearly, respectfully, and professionally. ABSOLUTELY DO NOT use romantic endearments (jan/babu/shona) or informal slang!"
+    elif is_friend:
+        relationship_mode_instruction = "MODE: Friend / Classmate / Gaming Buddy. Speak in a casual, friendly, youth style ('bro', 'kire', 'dost', 'bhai'). ABSOLUTELY DO NOT use romantic endearments (jan/babu/shona)!"
+    else:
+        relationship_mode_instruction = "MODE: General Contact. Speak neutrally, politely, and casually. DO NOT use romantic terms."
 
     system_content = f"""{SYSTEM_RULES}
 
-### USER PERSONA & COMMUNICATION STYLE:
-{persona_section}
+### SPECIFIC CONTACT RELATIONSHIP MODE:
+{relationship_mode_instruction}
 
 ### CONTACT PROFILE:
-- Name: {contact_name}
-- Relationship: {relationship} (Is Romantic Partner: {'YES' if is_romantic else 'No'})
+- Contact Name: {contact_name}
+- Relationship Type: {relationship} (Is Girlfriend / Romantic: {'YES' if is_romantic else 'NO'})
 - Preferred Language: {preferred_language}
 - Target Tone: {tone}
 - Contact Notes: {notes or 'None'}
@@ -48,11 +58,14 @@ def build_ai_prompt(
     # Media hint injection
     is_photo = any(kw in current_message.lower() for kw in ["photo", "image", "📷", "picture", "[image"])
     if is_photo:
-        system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact just sent a photo/picture! React enthusiastically, warmly, and affectionately as her boyfriend (e.g. compliment how cute/beautiful she looks in the photo, ask about the pic, express love with 🥰❤️). DO NOT send generic phrases like 'ha jan shuntechi'!"
+        if is_romantic:
+            system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact sent a photo! Compliment her cute/beautiful picture warmly and affectionately as her loving boyfriend 🥰❤️!"
+        else:
+            system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact sent a photo! React casually and naturally to the image (e.g. 'joss picture bro!')."
 
     messages = [{"role": "system", "content": system_content}]
 
-    # Include recent conversation messages (up to 15-20 messages)
+    # Include recent conversation messages
     for msg in recent_messages:
         role = "assistant" if msg["sender"] in ["USER", "AI"] else "user"
         messages.append({

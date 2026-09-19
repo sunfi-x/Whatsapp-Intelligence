@@ -149,9 +149,10 @@ class AIEngine:
             elif role == "user":
                 last_msg = content.lower()
 
-        is_romantic = "is romantic partner: yes" in system_context or any(k in system_context for k in ["orin", "gf", "girlfriend", "romantic", "rio"])
+        is_romantic = "is girlfriend / romantic: yes" in system_context or "name: rio" in system_context or "name: orin" in system_context
+        is_professional = "professional" in system_context or "name: arif" in system_context
         is_bangla_script = any('\u0980' <= char <= '\u09FF' for char in last_msg)
-        is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good", "wish", "suicide", "attempt", "die"])
+        is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good", "wish", "suicide", "attempt", "die", "review", "pull", "request"])
 
         options = []
 
@@ -255,8 +256,22 @@ class AIEngine:
                         "tumi thakle amar khub bhalo lage babu 🥰",
                         "amar shona ta ki korche now? bolo na ❤️"
                     ]
+        elif is_professional:
+            # Professional Contacts (Arif, etc.)
+            if is_english or any(w in last_msg for w in ["review", "pr", "pull", "request", "code", "task"]):
+                options = [
+                    "Sure, I'll review it shortly and get back to you with my feedback!",
+                    "Got it, thanks for the update. I will check it as soon as possible!",
+                    "Thanks for letting me know. I am taking a look right now."
+                ]
+            else:
+                options = [
+                    "Sure, I will check and let you know.",
+                    "Hello! Thanks for the message, I am on it.",
+                    "Got it, I'll review and respond shortly."
+                ]
         else:
-            # General Friends
+            # General Friends & Classmates (Sunfi, Fahim, Sami, Rakib)
             if is_bangla_script:
                 options = ["হ্যাঁ ব্রো, ভালো আছি! তোর কি খবর?", "এই তো জোস আছি ব্রো! তুই কেমন আছিস?"]
             elif is_english:
@@ -265,7 +280,9 @@ class AIEngine:
                 options = [
                     "ei to bhalo achi bro! tor ki obostha?",
                     "kire bro, bol ki khobor!",
-                    "haa bro shuntechi, bol tui!"
+                    "haa bro shuntechi, bol tui!",
+                    "Kire bro! Ki obostha? Bol",
+                    "Haha haa, dekhlam 😂 Ki obostha bro?"
                 ]
 
         # Filter out options that were ALREADY sent in recent assistant messages!
