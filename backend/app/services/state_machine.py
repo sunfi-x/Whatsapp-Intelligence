@@ -17,12 +17,17 @@ logger = logging.getLogger(__name__)
 
 
 async def get_or_create_contact(db: AsyncSession, phone: str, name: str = "Unknown") -> Contact:
-    """Finds or creates a contact by phone number."""
+    """Finds or creates a contact by phone number and updates WhatsApp profile name."""
     result = await db.execute(select(Contact).where(Contact.phone == phone))
     contact = result.scalar_one_or_none()
+    
+    clean_name = name.strip() if name and name.strip() else f"Contact ({phone})"
+    if clean_name.startswith("Contact (") and phone:
+        clean_name = f"Contact ({phone[-4:]})"
+
     if not contact:
         contact = Contact(
-            name=name,
+            name=name.strip() if name and name.strip() and not name.startswith("Contact (") else clean_name,
             phone=phone,
             relationship="Unknown",
             preferred_language="Banglish",
@@ -33,6 +38,13 @@ async def get_or_create_contact(db: AsyncSession, phone: str, name: str = "Unkno
         await db.commit()
         await db.refresh(contact)
         await get_or_create_memory(db, contact.id)
+    else:
+        # If real name provided from WhatsApp Webhook profile, update contact name
+        if name and name.strip() and not name.startswith("Contact (") and name != "Unknown":
+            if contact.name.startswith("Contact (") or contact.name == "Unknown":
+                contact.name = name.strip()
+                await db.commit()
+                await db.refresh(contact)
     return contact
 
 
