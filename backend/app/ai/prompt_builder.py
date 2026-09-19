@@ -45,6 +45,11 @@ def build_ai_prompt(
 - Important Context: {important_context or 'None'}
 """
 
+    # Media hint injection
+    is_photo = any(kw in current_message.lower() for kw in ["photo", "image", "📷", "picture", "[image"])
+    if is_photo:
+        system_content += "\n\n### MEDIA CONTEXT (PHOTO RECEIVED):\nThe contact just sent a photo/picture! React enthusiastically, warmly, and affectionately as her boyfriend (e.g. compliment how cute/beautiful she looks in the photo, ask about the pic, express love with 🥰❤️). DO NOT send generic phrases like 'ha jan shuntechi'!"
+
     messages = [{"role": "system", "content": system_content}]
 
     # Include recent conversation messages (up to 15-20 messages)

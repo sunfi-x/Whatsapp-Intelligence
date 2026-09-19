@@ -42,6 +42,7 @@ async def handle_whatsapp_webhook(request: Request, db: AsyncSession = Depends(g
                 sender_phone=msg.sender_phone,
                 sender_name=msg.sender_name,
                 message_text=msg.message_text,
+                message_type=msg.message_type,
                 whatsapp_message_id=msg.whatsapp_message_id
             )
             results.append(res)

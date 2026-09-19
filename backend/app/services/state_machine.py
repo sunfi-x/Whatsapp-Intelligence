@@ -51,6 +51,7 @@ async def process_incoming_message(
     sender_phone: str,
     sender_name: str,
     message_text: str,
+    message_type: str = "text",
     whatsapp_message_id: str | None = None
 ) -> dict:
     """Core Message Ingestion & State Machine Pipeline with Mutex Locking."""
@@ -75,7 +76,7 @@ async def process_incoming_message(
             contact_id=contact.id,
             sender=MessageSender.CONTACT,
             message=message_text,
-            message_type="text",
+            message_type=message_type,
             whatsapp_message_id=whatsapp_message_id,
             timestamp=datetime.now(timezone.utc)
         )

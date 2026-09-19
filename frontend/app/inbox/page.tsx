@@ -10,49 +10,64 @@ import { StatusBadge } from '@/components/StatusBadge';
 // Renders message content based on message_type
 function MessageContent({ message, message_type }: { message: string; message_type: string }) {
   const type = (message_type || 'text').toLowerCase();
-  if (type === 'image') {
+  const isImage = type === 'image' || message.toLowerCase().includes('[image') || message.includes('📷') || message.toLowerCase().includes('photo');
+
+  if (isImage) {
+    const rawCap = message
+      .replace(/\[IMAGE message received:?/gi, '')
+      .replace(/📷 \[Photo received:?/gi, '')
+      .replace(/📷/g, '')
+      .replace(/\]/g, '')
+      .trim();
+
+    const hasCaption = rawCap && rawCap !== 'Photo received' && rawCap !== 'IMAGE message received';
+
     return (
-      <div className="flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
-          <ImageIcon className="h-5 w-5 text-[#25D366]" />
-          <span className="text-sm font-semibold text-[#667781]">Photo</span>
+      <div className="flex flex-col gap-2 py-1">
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 shadow-sm">
+          <div className="p-2 rounded-xl bg-[#05392E] text-white shadow-sm">
+            <ImageIcon className="h-5 w-5 text-[#25D366]" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-extrabold text-[#05392E]">WhatsApp Photo</span>
+            <span className="text-[10px] font-bold text-[#667781]">Media Image Received</span>
+          </div>
         </div>
-        <span className="text-xs text-[#667781] italic">{message}</span>
+        {hasCaption && (
+          <span className="text-xs font-semibold text-[#111B21] px-1">{rawCap}</span>
+        )}
       </div>
     );
   }
   if (type === 'video') {
     return (
-      <div className="flex flex-col items-center gap-2">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
-          <Video className="h-5 w-5 text-[#25D366]" />
-          <span className="text-sm font-semibold text-[#667781]">Video</span>
-        </div>
-        <span className="text-xs text-[#667781] italic">{message}</span>
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#05392E]/08 border border-[#05392E]/15 shadow-sm">
+        <Video className="h-5 w-5 text-[#25D366]" />
+        <span className="text-xs font-extrabold text-[#05392E]">WhatsApp Video</span>
       </div>
     );
   }
   if (type === 'audio' || type === 'voice') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#05392E]/08 border border-[#05392E]/15 shadow-sm">
         <Mic className="h-5 w-5 text-[#25D366]" />
-        <span className="text-sm font-semibold text-[#667781]">Voice / Audio message</span>
+        <span className="text-xs font-extrabold text-[#05392E]">Voice Note / Audio</span>
       </div>
     );
   }
   if (type === 'document') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#05392E]/08 border border-[#05392E]/15 shadow-sm">
         <FileText className="h-5 w-5 text-[#25D366]" />
-        <span className="text-sm font-semibold text-[#667781]">Document</span>
+        <span className="text-xs font-extrabold text-[#05392E]">Document File</span>
       </div>
     );
   }
   if (type === 'sticker') {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#05392E]/08 border border-[#05392E]/15 shadow-sm">
         <Sticker className="h-5 w-5 text-[#25D366]" />
-        <span className="text-sm font-semibold text-[#667781]">Sticker</span>
+        <span className="text-xs font-extrabold text-[#05392E]">Sticker</span>
       </div>
     );
   }

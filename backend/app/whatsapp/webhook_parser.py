@@ -8,8 +8,10 @@ class ParsedWhatsAppMessage(BaseModel):
     sender_phone: str
     sender_name: str
     message_text: str
+    message_type: str = "text"
     whatsapp_message_id: str
     timestamp: str | None = None
+    caption: str | None = None
 
 
 def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]:
@@ -34,7 +36,7 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                         contact_map[wa_id] = profile_name
                 
                 for msg in messages:
-                    msg_type = msg.get("type")
+                    msg_type = msg.get("type", "text")
                     msg_id = msg.get("id", "")
                     raw_from = str(msg.get("from", "")).strip()
                     from_phone = raw_from.replace("+", "").replace(" ", "").strip()
@@ -50,19 +52,39 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                                     sender_phone=from_phone,
                                     sender_name=sender_name,
                                     message_text=text_body,
+                                    message_type="text",
                                     whatsapp_message_id=msg_id,
                                     timestamp=str(msg.get("timestamp", ""))
                                 )
                             )
-                    elif msg_type:
-                        # Handle non-text messages (images, voice notes, audio, location)
+                    elif msg_type == "image":
+                        img_obj = msg.get("image", {})
+                        caption = img_obj.get("caption", "").strip() if isinstance(img_obj, dict) else ""
+                        text_repr = f"📷 [Photo received: {caption}]" if caption else "📷 [Photo received]"
                         parsed_messages.append(
                             ParsedWhatsAppMessage(
                                 sender_phone=from_phone,
                                 sender_name=sender_name,
-                                message_text=f"[{msg_type.upper()} message received]",
+                                message_text=text_repr,
+                                message_type="image",
                                 whatsapp_message_id=msg_id,
-                                timestamp=str(msg.get("timestamp", ""))
+                                timestamp=str(msg.get("timestamp", "")),
+                                caption=caption
+                            )
+                        )
+                    elif msg_type in ["video", "audio", "voice", "document", "sticker"]:
+                        media_obj = msg.get(msg_type, {})
+                        caption = media_obj.get("caption", "").strip() if isinstance(media_obj, dict) else ""
+                        text_repr = f"[{msg_type.upper()} message received: {caption}]" if caption else f"[{msg_type.upper()} message received]"
+                        parsed_messages.append(
+                            ParsedWhatsAppMessage(
+                                sender_phone=from_phone,
+                                sender_name=sender_name,
+                                message_text=text_repr,
+                                message_type=msg_type,
+                                whatsapp_message_id=msg_id,
+                                timestamp=str(msg.get("timestamp", "")),
+                                caption=caption
                             )
                         )
     except Exception as exc:
