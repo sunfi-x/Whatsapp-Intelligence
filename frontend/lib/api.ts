@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { Conversation, Contact, Setting, AnalyticsOverview, HumanEditComparison } from './types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://whatsapp-intelligence.onrender.com/api/v1';
+const rawEnvUrl = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = (rawEnvUrl && !rawEnvUrl.includes('trycloudflare.com')) 
+  ? rawEnvUrl 
+  : 'https://whatsapp-intelligence.onrender.com/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
