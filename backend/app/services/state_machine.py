@@ -285,9 +285,15 @@ async def approve_and_start_ai(db: AsyncSession, contact_id: int, edited_reply: 
 
 
 async def reject_pending_reply(db: AsyncSession, contact_id: int) -> dict:
-    """Marks pending AI reply as REJECTED."""
+    """Marks pending AI reply as REJECTED and resets contact AI status to OFF."""
     lock = await get_contact_lock(contact_id)
     async with lock:
+        res = await db.execute(select(Contact).where(Contact.id == contact_id))
+        contact = res.scalar_one_or_none()
+        if contact:
+            contact.ai_status = AIStatus.OFF
+            contact.updated_at = datetime.now(timezone.utc)
+
         reply_res = await db.execute(
             select(AIReply)
             .join(Message)
@@ -299,8 +305,9 @@ async def reject_pending_reply(db: AsyncSession, contact_id: int) -> dict:
         ai_reply = reply_res.scalar_one_or_none()
         if ai_reply:
             ai_reply.status = AIReplyStatus.REJECTED
-            await db.commit()
-        return {"status": "rejected", "contact_id": contact_id}
+            
+        await db.commit()
+        return {"status": "rejected", "contact_id": contact_id, "ai_status": "OFF"}
 
 
 async def turn_off_ai(db: AsyncSession, contact_id: int) -> dict:
