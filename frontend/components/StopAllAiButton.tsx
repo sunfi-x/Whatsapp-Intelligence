@@ -29,10 +29,11 @@ export const StopAllAiButton: React.FC<StopAllAiButtonProps> = ({ onSuccess }) =
     <>
       <button
         onClick={() => setShowConfirm(true)}
-        className="btn-3d-danger flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-extrabold tracking-wide"
+        className="btn-3d-danger flex items-center gap-1.5 sm:gap-2 rounded-xl px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-extrabold tracking-wide shrink-0"
       >
-        <ShieldAlert className="h-4 w-4" />
-        <span>⛔ STOP ALL AI</span>
+        <ShieldAlert className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+        <span className="hidden sm:inline">⛔ STOP ALL AI</span>
+        <span className="sm:hidden font-black">STOP AI</span>
       </button>
 
       {showConfirm && (

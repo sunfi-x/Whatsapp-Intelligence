@@ -34,6 +34,20 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSyncData = async () => {
+    setLoading(true);
+    try {
+      const { api } = await import('@/lib/api');
+      await api.post('/admin/sync-system-data');
+      await fetchData();
+    } catch (err) {
+      console.error('Error syncing system data:', err);
+      await fetchData();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const interval = setInterval(() => {
@@ -124,7 +138,7 @@ export default function DashboardPage() {
 
             <div className="mt-6 flex flex-wrap items-center gap-3.5">
               <button
-                onClick={fetchData}
+                onClick={handleSyncData}
                 className="btn-3d-primary px-6 py-3 rounded-2xl text-sm font-extrabold flex items-center gap-2"
               >
                 <RefreshCw className={`h-4.5 w-4.5 ${loading ? 'animate-spin' : ''}`} />

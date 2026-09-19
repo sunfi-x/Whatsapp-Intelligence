@@ -46,7 +46,6 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
     imported_contacts = 0
     imported_messages = 0
 
-    # 1. Import Contacts
     phone_to_contact_id = {}
     for c in payload.contacts:
         res = await db.execute(select(Contact).where(Contact.phone == c.phone))
@@ -67,7 +66,6 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
             await db.commit()
             await db.refresh(contact)
             
-            # Memory
             mem = ConversationMemory(
                 contact_id=contact.id,
                 summary=f"{contact.name} is a {contact.relationship.lower()} of Sunfi.",
@@ -77,14 +75,12 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
             await db.commit()
             imported_contacts += 1
         else:
-            # Update status if local had ACTIVE
             if c.ai_status == "ACTIVE" and contact.ai_status != AIStatus.ACTIVE:
                 contact.ai_status = AIStatus.ACTIVE
                 await db.commit()
 
         phone_to_contact_id[c.phone] = contact.id
 
-    # 2. Import Messages
     for m in payload.messages:
         contact_id = phone_to_contact_id.get(m.phone)
         if not contact_id:
@@ -97,7 +93,6 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
         if not contact_id:
             continue
 
-        # Check duplicate message text & timestamp
         dup_check = await db.execute(
             select(Message)
             .where(Message.contact_id == contact_id)
@@ -133,3 +128,74 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
         "imported_contacts": imported_contacts,
         "imported_messages": imported_messages
     }
+
+
+@router.post("/sync-system-data")
+async def sync_system_data_endpoint(db: AsyncSession = Depends(get_db)):
+    """Triggers seed restoration of all 177+ messages and contacts directly from FULL_SEED_DATA."""
+    try:
+        from app.core.full_seed_data import FULL_SEED_DATA
+        imported_contacts = 0
+        imported_messages = 0
+
+        phone_to_contact = {}
+        for c in FULL_SEED_DATA.get("contacts", []):
+            res = await db.execute(select(Contact).where(Contact.phone == c["phone"]))
+            contact = res.scalar_one_or_none()
+            status_enum = AIStatus.ACTIVE if c.get("ai_status") == "ACTIVE" else (AIStatus.PENDING if c.get("ai_status") == "PENDING" else AIStatus.OFF)
+            if not contact:
+                contact = Contact(
+                    name=c["name"],
+                    phone=c["phone"],
+                    relationship=c.get("relationship", "Unknown"),
+                    preferred_language=c.get("preferred_language", "Banglish"),
+                    preferred_tone=c.get("preferred_tone", "Casual"),
+                    notes=c.get("notes"),
+                    ai_status=status_enum
+                )
+                db.add(contact)
+                await db.commit()
+                await db.refresh(contact)
+
+                mem = ConversationMemory(
+                    contact_id=contact.id,
+                    summary=f"{contact.name} is a {contact.relationship.lower()} of Sunfi.",
+                    important_context=contact.notes
+                )
+                session_mem = mem
+                db.add(session_mem)
+                await db.commit()
+                imported_contacts += 1
+            phone_to_contact[c["phone"]] = contact
+
+        for m in FULL_SEED_DATA.get("messages", []):
+            contact = phone_to_contact.get(m["phone"])
+            if not contact:
+                continue
+            dup = await db.execute(
+                select(Message).where(Message.contact_id == contact.id).where(Message.message == m["message"])
+            )
+            if dup.scalar_one_or_none():
+                continue
+            sender_enum = MessageSender.AI if m["sender"] == "AI" else (MessageSender.USER if m["sender"] == "USER" else MessageSender.CONTACT)
+            dt = datetime.now(timezone.utc)
+            if m.get("timestamp"):
+                try:
+                    dt = datetime.fromisoformat(m["timestamp"])
+                except Exception:
+                    pass
+            db.add(Message(
+                contact_id=contact.id,
+                sender=sender_enum,
+                message=m["message"],
+                message_type=m.get("message_type", "text"),
+                timestamp=dt,
+                whatsapp_message_id=m.get("whatsapp_message_id")
+            ))
+            imported_messages += 1
+
+        await db.commit()
+        return {"status": "success", "imported_contacts": imported_contacts, "imported_messages": imported_messages}
+    except Exception as exc:
+        logger.error(f"Error syncing system data: {exc}")
+        raise HTTPException(status_code=500, detail=str(exc))

@@ -41,30 +41,66 @@ async def seed_initial_demo_data():
             session.add(user_setting)
             await session.commit()
 
-        # 2. Seed initial contacts if missing or update RIO/Sunfi
-        demo_contacts = [
-            Contact(name="RIO", phone="8801781354831", relationship="Girlfriend", preferred_language="Banglish", preferred_tone="Romantic", ai_status=AIStatus.ACTIVE, notes="GF / Orin. Romantic & affectionate relationship."),
-            Contact(name="Sunfi", phone="8801309605222", relationship="Friend", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.ACTIVE, notes="System Owner."),
-            Contact(name="Rakib", phone="8801700000001", relationship="Friend", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.ACTIVE, notes="University classmate & close friend. Discusses campus, football, classes."),
-            Contact(name="Fahim", phone="8801700000002", relationship="Classmate", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.OFF, notes="Group project partner."),
-            Contact(name="Sami", phone="8801700000003", relationship="Friend", preferred_language="Banglish", preferred_tone="Funny", ai_status=AIStatus.OFF, notes="Gaming buddy."),
-            Contact(name="Arif", phone="8801700000004", relationship="Professional", preferred_language="English", preferred_tone="Professional", ai_status=AIStatus.OFF, notes="Software Lead."),
-        ]
-        
-        for c_data in demo_contacts:
-            existing = await session.execute(select(Contact).where(Contact.phone == c_data.phone))
-            if not existing.scalar_one_or_none():
-                session.add(c_data)
-                await session.commit()
-                await session.refresh(c_data)
-                
-                mem = ConversationMemory(
-                    contact_id=c_data.id,
-                    summary=f"{c_data.name} is a {c_data.relationship.lower()} of Sunfi.",
-                    important_context=c_data.notes
+        # 2. Seed initial contacts and 177+ conversation messages from FULL_SEED_DATA
+        try:
+            from app.core.full_seed_data import FULL_SEED_DATA
+            phone_to_contact = {}
+            for c in FULL_SEED_DATA.get("contacts", []):
+                res = await session.execute(select(Contact).where(Contact.phone == c["phone"]))
+                contact = res.scalar_one_or_none()
+                status_enum = AIStatus.ACTIVE if c.get("ai_status") == "ACTIVE" else (AIStatus.PENDING if c.get("ai_status") == "PENDING" else AIStatus.OFF)
+                if not contact:
+                    contact = Contact(
+                        name=c["name"],
+                        phone=c["phone"],
+                        relationship=c.get("relationship", "Unknown"),
+                        preferred_language=c.get("preferred_language", "Banglish"),
+                        preferred_tone=c.get("preferred_tone", "Casual"),
+                        notes=c.get("notes"),
+                        ai_status=status_enum
+                    )
+                    session.add(contact)
+                    await session.commit()
+                    await session.refresh(contact)
+
+                    mem = ConversationMemory(
+                        contact_id=contact.id,
+                        summary=f"{contact.name} is a {contact.relationship.lower()} of Sunfi.",
+                        important_context=contact.notes
+                    )
+                    session.add(mem)
+                    await session.commit()
+                phone_to_contact[c["phone"]] = contact
+
+            # Seed messages
+            for m in FULL_SEED_DATA.get("messages", []):
+                contact = phone_to_contact.get(m["phone"])
+                if not contact:
+                    continue
+                dup = await session.execute(
+                    select(Message).where(Message.contact_id == contact.id).where(Message.message == m["message"])
                 )
-                session.add(mem)
-                await session.commit()
+                if dup.scalar_one_or_none():
+                    continue
+                sender_enum = MessageSender.AI if m["sender"] == "AI" else (MessageSender.USER if m["sender"] == "USER" else MessageSender.CONTACT)
+                dt = datetime.now(timezone.utc)
+                if m.get("timestamp"):
+                    try:
+                        dt = datetime.fromisoformat(m["timestamp"])
+                    except Exception:
+                        pass
+                session.add(Message(
+                    contact_id=contact.id,
+                    sender=sender_enum,
+                    message=m["message"],
+                    message_type=m.get("message_type", "text"),
+                    timestamp=dt,
+                    whatsapp_message_id=m.get("whatsapp_message_id")
+                ))
+            await session.commit()
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).error(f"Error seeding full data: {exc}")
 
 
 @asynccontextmanager
