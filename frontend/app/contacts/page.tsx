@@ -170,11 +170,13 @@ export default function ContactsPage() {
                   onChange={(e) => setPrefTone(e.target.value)}
                   className="w-full rounded-2xl border border-[#E5EAEA] bg-[#F7FAF9] px-3.5 py-2.5 text-xs font-bold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner cursor-pointer"
                 >
-                  <option value="Casual">Casual</option>
-                  <option value="Romantic / Loving">Romantic / Loving 🥰</option>
-                  <option value="Friendly">Friendly</option>
-                  <option value="Professional">Professional</option>
-                  <option value="Funny">Funny</option>
+                  <option value="Casual">😎 Casual</option>
+                  <option value="Short">⚡ Short</option>
+                  <option value="Funny">😂 Funny</option>
+                  <option value="Friendly">😊 Friendly</option>
+                  <option value="Professional">💼 Professional</option>
+                  <option value="Serious">😐 Serious</option>
+                  <option value="Romantic">❤️ Romantic</option>
                 </select>
               </div>
             </div>

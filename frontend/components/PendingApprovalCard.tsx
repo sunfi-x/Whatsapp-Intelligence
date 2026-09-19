@@ -105,13 +105,13 @@ export const PendingApprovalCard: React.FC<PendingApprovalCardProps> = ({ conver
                   disabled={loading}
                   className="bg-white border border-[#05392E]/25 rounded-xl px-3 py-1 text-xs font-bold text-[#05392E] focus:outline-none shadow-sm cursor-pointer"
                 >
-                  <option value="Casual">Casual Tone</option>
-                  <option value="Short">Short</option>
-                  <option value="Funny">Funny</option>
-                  <option value="Friendly">Friendly</option>
-                  <option value="Professional">Professional</option>
-                  <option value="Serious">Serious</option>
-                  <option value="Romantic">Romantic</option>
+                  <option value="Casual">😎 Casual</option>
+                  <option value="Short">⚡ Short</option>
+                  <option value="Funny">😂 Funny</option>
+                  <option value="Friendly">😊 Friendly</option>
+                  <option value="Professional">💼 Professional</option>
+                  <option value="Serious">😐 Serious</option>
+                  <option value="Romantic">❤️ Romantic</option>
                 </select>
                 <button
                   onClick={() => handleRegenerate(selectedTone)}

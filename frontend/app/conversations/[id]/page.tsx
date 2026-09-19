@@ -267,8 +267,16 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   disabled={actionLoading}
                   className="bg-white border border-[#05392E]/25 rounded-xl px-2.5 py-1 text-xs font-bold text-[#05392E] focus:outline-none shadow-sm cursor-pointer"
                 >
-                  {['Casual', 'Short', 'Funny', 'Friendly', 'Professional', 'Serious'].map((t) => (
-                    <option key={t} value={t}>{t}</option>
+                  {[
+                    { key: 'Casual', label: '😎 Casual' },
+                    { key: 'Short', label: '⚡ Short' },
+                    { key: 'Funny', label: '😂 Funny' },
+                    { key: 'Friendly', label: '😊 Friendly' },
+                    { key: 'Professional', label: '💼 Professional' },
+                    { key: 'Serious', label: '😐 Serious' },
+                    { key: 'Romantic', label: '❤️ Romantic' },
+                  ].map((t) => (
+                    <option key={t.key} value={t.key}>{t.label}</option>
                   ))}
                 </select>
                 <button
