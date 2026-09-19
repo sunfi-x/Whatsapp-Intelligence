@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Lock, ShieldCheck, KeyRound, Sparkles, AlertCircle } from 'lucide-react';
+import { Lock, ShieldCheck, KeyRound, Sparkles, AlertCircle, Mail } from 'lucide-react';
 
 const DEFAULT_PIN = '2026';
 
@@ -30,7 +30,7 @@ export function SecurityGate({ children }: { children: React.ReactNode }) {
       setErrorMsg('');
       setPinInput('');
     } else {
-      setErrorMsg('Incorrect Passcode PIN. Access Denied!');
+      setErrorMsg('Incorrect Security PIN. Please contact Sunfi for access.');
       setPinInput('');
     }
   };
@@ -47,56 +47,86 @@ export function SecurityGate({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen bg-[#F7FAF9] flex items-center justify-center p-4 relative overflow-hidden">
         {/* Ambient Radial Gradient Background */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle_at_center,rgba(37,211,102,0.15)_0%,transparent_70%)] blur-3xl pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-[radial-gradient(circle_at_center,rgba(37,211,102,0.12)_0%,transparent_70%)] blur-3xl pointer-events-none" />
         
-        <div className="w-full max-w-md card-3d rounded-3xl p-8 border border-[#05392E]/15 bg-white/95 backdrop-blur shadow-2xl relative z-10 text-center space-y-6">
-          <div className="mx-auto w-16 h-16 rounded-3xl bg-[#05392E] border border-[#03241D] flex items-center justify-center text-white shadow-lg animate-float-subtle">
+        <div className="w-full max-w-lg card-3d rounded-3xl p-6 sm:p-8 border border-[#05392E]/15 bg-white/95 backdrop-blur shadow-2xl relative z-10 text-center space-y-6">
+          
+          {/* Top Icon Badge */}
+          <div className="mx-auto w-16 h-16 rounded-3xl bg-[#05392E] border border-[#03241D] flex items-center justify-center text-white shadow-xl animate-float-subtle">
             <Lock className="h-8 w-8 text-[#25D366]" />
           </div>
 
           <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8F5E9] text-xs font-extrabold text-[#05392E] mb-2 border border-[#05392E]/20">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[11px] font-extrabold text-[#05392E] mb-2 border border-[#05392E]/20 uppercase tracking-wider">
               <ShieldCheck className="h-3.5 w-3.5 text-[#25D366]" />
-              <span>PROTECTED ACCESS</span>
+              <span>Restricted Access Gate</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-[#111B21]">SUNFI Intelligence</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111B21]">SUNFI Intelligence</h1>
             <p className="text-xs font-semibold text-[#667781] mt-1">
-              Enter your security Passcode PIN to access private WhatsApp conversations and AI settings.
+              Autonomous WhatsApp AI Auto-Responder & Persona Command Center
             </p>
           </div>
 
+          {/* Sensitive Data & Contact Notice Box */}
+          <div className="rounded-2xl p-4 bg-[#F0FDF4] border border-[#25D366]/30 text-left space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-[#05392E] flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-[#25D366]" />
+                Private & Sensitive Personal Data Notice
+              </span>
+            </div>
+            <p className="text-xs font-medium text-[#2E4F46] leading-relaxed">
+              This dashboard contains sensitive personal WhatsApp conversations, contact details, and live AI model controls. 
+            </p>
+            <p className="text-[11px] font-semibold text-[#05392E] leading-relaxed pt-1 border-t border-[#25D366]/20">
+              💡 For evaluation, audit, or development access, please contact Sunfi to request the passcode PIN.
+            </p>
+          </div>
+
+          {/* Unlock PIN Form */}
           <form onSubmit={handleUnlock} className="space-y-4">
             <div className="relative">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#667781]" />
               <input
                 type="password"
-                placeholder="Enter Access PIN (Default: 2026)"
+                placeholder="Enter Access Passcode PIN"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
-                maxLength={10}
-                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[#E5EAEA] bg-[#F7FAF9] text-center text-lg font-bold tracking-widest text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner font-digits"
+                maxLength={12}
+                className="w-full pl-12 pr-4 py-3.5 rounded-2xl border border-[#E5EAEA] bg-[#F7FAF9] text-center text-lg font-bold tracking-widest text-[#111B21] focus:outline-none focus:border-[#05392E] focus:ring-2 focus:ring-[#25D366]/20 transition shadow-inner"
               />
             </div>
 
             {errorMsg && (
-              <div className="flex items-center justify-center gap-1.5 text-xs font-extrabold text-[#D32F2F]">
-                <AlertCircle className="h-4 w-4" />
+              <div className="flex items-center justify-center gap-1.5 text-xs font-extrabold text-[#D32F2F] bg-red-50 py-2 rounded-xl border border-red-200">
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             <button
               type="submit"
-              className="btn-3d-bright w-full py-3.5 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg"
+              className="btn-3d-bright w-full py-3.5 rounded-2xl text-sm font-extrabold flex items-center justify-center gap-2 shadow-lg hover:scale-[1.01] transition-transform"
             >
               <Sparkles className="h-4 w-4 text-[#111B21]" />
               <span>Unlock Command Center</span>
             </button>
           </form>
 
-          <p className="text-[11px] font-semibold text-[#667781] pt-2 border-t border-[#E5EAEA]">
-            🔒 All conversations, contacts, and AI keys are encrypted.
-          </p>
+          {/* Contact Action & Footer */}
+          <div className="pt-2 border-t border-[#E5EAEA] flex flex-col sm:flex-row items-center justify-between gap-2 text-[11px] font-semibold text-[#667781]">
+            <span className="flex items-center gap-1">
+              🔒 End-to-end Encrypted System
+            </span>
+            <a 
+              href="mailto:sazzad.sunfi@gmail.com?subject=WhatsApp%20Intelligence%20Access%20PIN%20Request" 
+              className="inline-flex items-center gap-1 text-[#05392E] font-bold hover:underline"
+            >
+              <Mail className="h-3.5 w-3.5 text-[#25D366]" />
+              <span>Contact Sunfi for PIN</span>
+            </a>
+          </div>
+
         </div>
       </div>
     );
