@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,6 +9,7 @@ from app.core.database import engine, Base, AsyncSessionLocal
 from app.api.v1.router import api_router
 from app.models.user import User
 from app.models.contact import Contact, AIStatus
+from app.models.message import Message, MessageSender
 from app.models.setting import Setting, GlobalAIStatus
 from app.models.memory import ConversationMemory
 from app.ai.persona import DEFAULT_PERSONA
