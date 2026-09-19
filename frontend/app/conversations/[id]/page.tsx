@@ -2,7 +2,59 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Bot, Sparkles } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Bot, Sparkles, ImageIcon, FileText, Mic, Video, Sticker } from 'lucide-react';
+
+// Renders message content based on message_type
+function MessageContent({ message, message_type }: { message: string; message_type: string }) {
+  const type = (message_type || 'text').toLowerCase();
+  if (type === 'image') {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+          <ImageIcon className="h-5 w-5 text-[#25D366]" />
+          <span className="text-sm font-semibold text-[#667781]">Photo</span>
+        </div>
+        <span className="text-xs text-[#667781] italic">{message}</span>
+      </div>
+    );
+  }
+  if (type === 'video') {
+    return (
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+          <Video className="h-5 w-5 text-[#25D366]" />
+          <span className="text-sm font-semibold text-[#667781]">Video</span>
+        </div>
+        <span className="text-xs text-[#667781] italic">{message}</span>
+      </div>
+    );
+  }
+  if (type === 'audio' || type === 'voice') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+        <Mic className="h-5 w-5 text-[#25D366]" />
+        <span className="text-sm font-semibold text-[#667781]">Voice / Audio message</span>
+      </div>
+    );
+  }
+  if (type === 'document') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+        <FileText className="h-5 w-5 text-[#25D366]" />
+        <span className="text-sm font-semibold text-[#667781]">Document</span>
+      </div>
+    );
+  }
+  if (type === 'sticker') {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
+        <Sticker className="h-5 w-5 text-[#25D366]" />
+        <span className="text-sm font-semibold text-[#667781]">Sticker</span>
+      </div>
+    );
+  }
+  return <span>{message}</span>;
+}
 import { Contact, Message, AIReply } from '@/lib/types';
 import { getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -257,7 +309,7 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   {!isContact && !isAI && (
                     <span className="text-[10px] font-extrabold block mb-0.5 text-[#03241D]">You (Manual)</span>
                   )}
-                  <span>{msg.message}</span>
+                  <MessageContent message={msg.message} message_type={msg.message_type} />
                 </div>
 
                 {/* Timestamp */}

@@ -1,13 +1,20 @@
 import asyncio
 import logging
+import random
 import httpx
 import openai
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# List of models to try in order of preference
-MODELS_TO_TRY = ["gemini-3.5-flash", "gemini-3.6-flash"]
+# List of models to try in order of preference (high-quota models first)
+MODELS_TO_TRY = [
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.6-flash"
+]
 
 
 class AIEngine:
@@ -59,15 +66,15 @@ class AIEngine:
             payload = {
                 "contents": merged_contents,
                 "generationConfig": {
-                    "temperature": 0.75,
+                    "temperature": 0.8,
                     "maxOutputTokens": 1000,
                 }
             }
             if system_text.strip():
                 payload["system_instruction"] = {"parts": [{"text": system_text.strip()}]}
 
-            # Try models in list (gemini-3.5-flash -> gemini-3.6-flash)
-            models = [self.gemini_model] + [m for m in MODELS_TO_TRY if m != self.gemini_model]
+            # Try models in list (gemini-2.5-flash -> gemini-flash-latest -> gemini-2.5-flash-lite -> ...)
+            models = ["gemini-2.5-flash", "gemini-flash-latest", self.gemini_model] + [m for m in MODELS_TO_TRY if m not in ["gemini-2.5-flash", "gemini-flash-latest", self.gemini_model]]
             
             for model_name in models:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
@@ -109,45 +116,89 @@ class AIEngine:
             except Exception as exc:
                 logger.error(f"OpenAI API generation error: {exc}")
 
-        # Priority 3: Natural Human Fallback Generator
+        # Priority 3: Dynamic Human Fallback Generator (Non-repetitive)
         logger.info("Using smart local fallback reply generator.")
         return self._generate_smart_fallback(prompt_messages)
 
     def _generate_smart_fallback(self, prompt_messages: list[dict]) -> str:
-        """Generates natural, high-quality human Banglish fallback responses."""
+        """Generates natural, dynamic human Banglish fallback responses with zero repetitive loops."""
         last_msg = ""
         system_context = ""
         for m in reversed(prompt_messages):
             if m.get("role") == "user":
                 last_msg = m.get("content", "").lower()
-            elif m.get("role") == "system":
-                system_context = m.get("content", "").lower()
+                break
+        for m in prompt_messages:
+            if m.get("role") == "system":
+                system_context += m.get("content", "").lower()
 
         is_romantic = "is romantic partner: yes" in system_context
 
         if is_romantic:
             if any(w in last_msg for w in ["khiyecho", "khabar", "kheyeso", "ate", "khaba"]):
-                return "ha babu kheyesi, tumi kheyeso jan? 🥰"
+                return random.choice([
+                    "ha babu kheyesi, tumi kheyeso jan? 🥰",
+                    "ei to matro khawa shesh korlam shona, tumi khiyecho? ❤️",
+                    "ha jan kheyechi, tumi ki khele bolo? 😘"
+                ])
             elif any(w in last_msg for w in ["kmn", "kemon", "ki obostha", "how"]):
-                return "tumar kotha bhabchi babu ❤️ tumi kemon acho?"
+                return random.choice([
+                    "tumar kotha bhabchi babu ❤️ tumi kemon acho?",
+                    "bhalo achi jan! tumar din kemon katlo? 🥰",
+                    "ei to bhaloi babu! tumi kemon acho bolo? 😘"
+                ])
             elif any(w in last_msg for w in ["love", "bhalobashi", "miss"]):
-                return "i love you too jan! khub miss korchi tumake 😘"
+                return random.choice([
+                    "i love you too jan! khub miss korchi tumake 😘",
+                    "uuumaahh ❤️ ami tumake aro beshi bhalobashi babu!",
+                    "miss you too shona! khub shighro dekha korbo 🥰"
+                ])
+            elif any(w in last_msg for w in ["bot", "ai", "banaise", "system", "text", "bari"]):
+                return random.choice([
+                    "areh jan erom bolcho keno? 🥺 ami to shotti shotti tumar shathe kotha bolchi!",
+                    "pagol naki tumi babu? ❤️ ami ekhaneai achi, ektu busy chilam tai thik moto bolte parini!",
+                    "haha jan, tumi khub cute 🥰 gossa koro na babu, bolo ki bolba!"
+                ])
             else:
-                return "ha jan, bolo na shuntechi 🥰 ki korcho?"
+                return random.choice([
+                    "accha babu, tumi ki korcho bolla na to? 🥰",
+                    "uuu shona, ar ki khobor bolo? ❤️",
+                    "ha jan shuntechi, bolo na r ki kotha ache 😘",
+                    "tumi thakle amar khub bhalo lage babu 🥰",
+                    "ki bhabcho jan? bolo na muke! ❤️"
+                ])
 
         # General Friends / Casual
         if any(w in last_msg for w in ["bhalo lagtese na", "kharap", "sad", "mon kharap"]):
-            return "ki hoilo bro? mon kharap keno? 🥺"
+            return random.choice([
+                "ki hoilo bro? mon kharap keno? 🥺",
+                "kono somossa hoise naki bro? bolo shuntechi!",
+                "mon kharap korish na bro, shob thik hoye jabe!"
+            ])
         elif any(w in last_msg for w in ["kire", "kireee", "hey", "hello", "bro", "hi"]):
-            return "ki obostha bro? bolo shuntechi!"
+            return random.choice([
+                "ki obostha bro? bolo shuntechi!",
+                "kire bro, bol ki khobor!",
+                "haa bro, bol ki bolba!"
+            ])
         elif any(w in last_msg for w in ["kmn", "kemon", "ki khobor"]):
-            return "bhalo achi bro! tor ki obostha?"
+            return random.choice([
+                "bhalo achi bro! tor ki obostha?",
+                "ei to joss achi bro! tor din kemon jacche?",
+                "bhaloi achi bro, tor kono khobor ase?"
+            ])
         elif any(w in last_msg for w in ["ashbi", "jabi", "campus", "adda"]):
-            return "ha bro ashbo mone hoy, ekshathe jabo ne!"
-        elif any(w in last_msg for w in ["ki", "kono", "problem"]):
-            return "bujhlam bro, bolo ki bolba!"
+            return random.choice([
+                "ha bro ashbo mone hoy, ekshathe jabo ne!",
+                "dekhi bro, ektu pore janacchi tor sathe!",
+                "ha bro jabo, koytay ber hobi?"
+            ])
         else:
-            return "achha bujhlam bro! pore kotha bolchi, ekon ektu busy achi."
+            return random.choice([
+                "achha bujhlam bro! pore kotha bolchi, ekon ektu busy achi.",
+                "ha bro shuntechi, bol tui!",
+                "bujhlam bro, r ki khobor?"
+            ])
 
 
 ai_engine = AIEngine()
