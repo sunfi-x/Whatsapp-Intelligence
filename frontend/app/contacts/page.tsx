@@ -136,6 +136,7 @@ export default function ContactsPage() {
                   className="w-full rounded-2xl border border-[#E5EAEA] bg-[#F7FAF9] px-3.5 py-2.5 text-xs font-bold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner cursor-pointer"
                 >
                   <option value="Friend">Friend</option>
+                  <option value="Girlfriend">Girlfriend / Romantic Partner ❤️</option>
                   <option value="Classmate">Classmate</option>
                   <option value="Family">Family</option>
                   <option value="Teacher">Teacher</option>
@@ -170,6 +171,7 @@ export default function ContactsPage() {
                   className="w-full rounded-2xl border border-[#E5EAEA] bg-[#F7FAF9] px-3.5 py-2.5 text-xs font-bold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner cursor-pointer"
                 >
                   <option value="Casual">Casual</option>
+                  <option value="Romantic / Loving">Romantic / Loving 🥰</option>
                   <option value="Friendly">Friendly</option>
                   <option value="Professional">Professional</option>
                   <option value="Funny">Funny</option>
