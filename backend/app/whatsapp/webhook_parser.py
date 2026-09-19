@@ -12,6 +12,7 @@ class ParsedWhatsAppMessage(BaseModel):
     whatsapp_message_id: str
     timestamp: str | None = None
     caption: str | None = None
+    media_id: str | None = None  # WhatsApp media ID for images/videos/audio
 
 
 def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]:
@@ -59,8 +60,13 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                             )
                     elif msg_type == "image":
                         img_obj = msg.get("image", {})
+                        media_id = img_obj.get("id", "").strip() if isinstance(img_obj, dict) else ""
                         caption = img_obj.get("caption", "").strip() if isinstance(img_obj, dict) else ""
-                        text_repr = f"📷 [Photo received: {caption}]" if caption else "📷 [Photo received]"
+                        # Encode media_id in text so it can be retrieved from DB later
+                        if media_id:
+                            text_repr = f"📷 MEDIA_ID:{media_id}" + (f" {caption}" if caption else "")
+                        else:
+                            text_repr = f"📷 [Photo received: {caption}]" if caption else "📷 [Photo received]"
                         parsed_messages.append(
                             ParsedWhatsAppMessage(
                                 sender_phone=from_phone,
@@ -69,7 +75,8 @@ def parse_whatsapp_webhook_payload(payload: dict) -> list[ParsedWhatsAppMessage]
                                 message_type="image",
                                 whatsapp_message_id=msg_id,
                                 timestamp=str(msg.get("timestamp", "")),
-                                caption=caption
+                                caption=caption,
+                                media_id=media_id
                             )
                         )
                     elif msg_type in ["video", "audio", "voice", "document", "sticker"]:

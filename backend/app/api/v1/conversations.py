@@ -1,8 +1,14 @@
+import re
+import io
+import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+
+logger = logging.getLogger(__name__)
 
 from app.core.database import get_db
 from app.models.contact import Contact, AIStatus
@@ -176,3 +182,42 @@ async def send_manual_message(contact_id: int, message_body: dict, db: AsyncSess
         return {"status": "manual_sent", "message": MessageRead.model_validate(user_msg), "whatsapp_response": whatsapp_res}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to send manual message: {str(exc)}")
+
+
+@router.get("/{contact_id}/media/{message_id}")
+async def get_message_media(contact_id: int, message_id: int, db: AsyncSession = Depends(get_db)):
+    """Proxy: fetches WhatsApp media bytes from Meta CDN and streams to frontend.
+    Requires media_id encoded in message text as 'MEDIA_ID:xxxxx'.
+    """
+    msg_res = await db.execute(
+        select(Message).where(Message.id == message_id, Message.contact_id == contact_id)
+    )
+    msg = msg_res.scalar_one_or_none()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    media_id_match = re.search(r"MEDIA_ID:(\S+)", msg.message or "")
+    if not media_id_match:
+        raise HTTPException(status_code=404, detail="No media_id in message")
+
+    media_id = media_id_match.group(1)
+
+    try:
+        meta_data = await whatsapp_client.get_media_url(media_id)
+        media_url = meta_data.get("url")
+        if not media_url:
+            raise HTTPException(status_code=503, detail="Media URL unavailable (mock mode or API not configured)")
+
+        mime_type = meta_data.get("mime_type", "image/jpeg")
+        image_bytes = await whatsapp_client.download_media_bytes(media_url)
+
+        return StreamingResponse(
+            io.BytesIO(image_bytes),
+            media_type=mime_type,
+            headers={"Cache-Control": "private, max-age=3600"}
+        )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Media proxy error for message {message_id}: {exc}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch media: {str(exc)}")

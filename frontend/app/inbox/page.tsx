@@ -2,27 +2,104 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile, ArrowDown } from 'lucide-react';
+import Image from 'next/image';
+import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile, ArrowDown, ZoomIn } from 'lucide-react';
 import { Conversation, AIStatus, Message, AIReply } from '@/lib/types';
-import { getConversations, getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage } from '@/lib/api';
+import { getConversations, getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage, getMediaUrl } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
 import { useNavbarVisibility } from '@/components/NavbarVisibilityContext';
 
 // Renders message content based on message_type
-function MessageContent({ message, message_type }: { message: string; message_type: string }) {
+function MessageContent({ message, message_type, contact_id, message_id }: {
+  message: string;
+  message_type: string;
+  contact_id?: number;
+  message_id?: number;
+}) {
+  const [imgState, setImgState] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [lightbox, setLightbox] = useState(false);
   const type = (message_type || 'text').toLowerCase();
-  const isImage = type === 'image' || message.toLowerCase().includes('[image') || message.includes('📷') || message.toLowerCase().includes('photo');
 
+  // Extract caption from the encoded text (e.g. "📷 MEDIA_ID:xxx My caption")
+  const hasMediaId = message.includes('MEDIA_ID:');
+  const captionAfterMediaId = hasMediaId
+    ? message.replace(/^.*?MEDIA_ID:\S+\s*/, '').trim()
+    : '';
+
+  const isImage = type === 'image' || message.includes('📷') || message.toLowerCase().includes('[image');
+
+  if (isImage && hasMediaId && contact_id && message_id) {
+    const imgSrc = getMediaUrl(contact_id, message_id);
+    return (
+      <div className="flex flex-col gap-1.5">
+        {/* Image container */}
+        <div className="relative rounded-2xl overflow-hidden bg-black/5 border border-black/10 max-w-[260px] sm:max-w-[300px] cursor-pointer group"
+          onClick={() => setLightbox(true)}
+        >
+          {imgState === 'loading' && (
+            <div className="flex items-center justify-center h-40 w-full">
+              <Loader2 className="h-6 w-6 text-[#05392E] animate-spin" />
+            </div>
+          )}
+          {imgState === 'error' && (
+            <div className="flex flex-col items-center justify-center h-36 w-full gap-2">
+              <ImageIcon className="h-8 w-8 text-[#667781]" />
+              <span className="text-[11px] text-[#667781] font-semibold">Image unavailable</span>
+            </div>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgSrc}
+            alt={captionAfterMediaId || 'WhatsApp Photo'}
+            className={`w-full object-cover transition-opacity duration-300 ${imgState === 'loaded' ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+            style={{ maxHeight: '280px' }}
+            onLoad={() => setImgState('loaded')}
+            onError={() => setImgState('error')}
+          />
+          {imgState === 'loaded' && (
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <ZoomIn className="h-7 w-7 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+            </div>
+          )}
+        </div>
+        {captionAfterMediaId && (
+          <span className="text-xs font-semibold text-[#111B21] px-1">{captionAfterMediaId}</span>
+        )}
+
+        {/* Lightbox overlay */}
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setLightbox(false)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imgSrc}
+              alt={captionAfterMediaId || 'WhatsApp Photo'}
+              className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+            <button
+              className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/80 transition"
+              onClick={() => setLightbox(false)}
+            >
+              <XCircle className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback placeholder for images without media_id (sent before this feature)
   if (isImage) {
     const rawCap = message
-      .replace(/\[IMAGE message received:?/gi, '')
       .replace(/📷 \[Photo received:?/gi, '')
       .replace(/📷/g, '')
+      .replace(/\[IMAGE message received:?/gi, '')
       .replace(/\]/g, '')
       .trim();
-
     const hasCaption = rawCap && rawCap !== 'Photo received' && rawCap !== 'IMAGE message received';
-
     return (
       <div className="flex flex-col gap-2 py-1">
         <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#25D366]/10 border border-[#25D366]/30 shadow-sm">
@@ -34,12 +111,11 @@ function MessageContent({ message, message_type }: { message: string; message_ty
             <span className="text-[10px] font-bold text-[#667781]">Media Image Received</span>
           </div>
         </div>
-        {hasCaption && (
-          <span className="text-xs font-semibold text-[#111B21] px-1">{rawCap}</span>
-        )}
+        {hasCaption && <span className="text-xs font-semibold text-[#111B21] px-1">{rawCap}</span>}
       </div>
     );
   }
+
   if (type === 'video') {
     return (
       <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-[#05392E]/08 border border-[#05392E]/15 shadow-sm">
@@ -74,6 +150,7 @@ function MessageContent({ message, message_type }: { message: string; message_ty
   }
   return <span>{message}</span>;
 }
+
 
 
 const EMOJI_CATEGORIES = [
@@ -601,7 +678,12 @@ export default function InboxPage() {
                           {!isContact && !isAI && (
                             <span className="text-[10px] font-black block mb-0.5 text-[#075E54]">You (Manual)</span>
                           )}
-                          <MessageContent message={msg.message} message_type={msg.message_type} />
+                          <MessageContent
+                            message={msg.message}
+                            message_type={msg.message_type}
+                            contact_id={activeContact.contact.id}
+                            message_id={msg.id}
+                          />
                         </div>
 
                         <span className="text-[10px] font-medium text-[#667781] mt-1 px-1">

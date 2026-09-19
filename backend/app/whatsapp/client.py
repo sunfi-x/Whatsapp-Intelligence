@@ -76,6 +76,40 @@ class WhatsAppClient:
             except Exception as exc:
                 logger.error(f"WhatsApp API connection error: {str(exc)}")
                 raise RuntimeError(f"WhatsApp API network error: {str(exc)}") from exc
+    async def get_media_url(self, media_id: str) -> dict:
+        """Fetches the temporary download URL for a WhatsApp media object by its media_id.
+        Returns dict with 'url', 'mime_type', 'file_size', 'id'.
+        """
+        if self.mock_mode:
+            logger.info(f"[Mock] get_media_url called for media_id={media_id}")
+            return {"url": None, "mime_type": "image/jpeg", "id": media_id, "mock": True}
+
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        graph_url = f"https://graph.facebook.com/{self.api_version}/{media_id}"
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            try:
+                resp = await client.get(graph_url, headers=headers)
+                resp.raise_for_status()
+                data = resp.json()
+                logger.info(f"Media metadata fetched for {media_id}: {data.get('mime_type')} {data.get('file_size')} bytes")
+                return data  # contains .url (temporary CDN URL), .mime_type, .file_size, .id
+            except httpx.HTTPStatusError as exc:
+                logger.error(f"Meta Graph media fetch failed: {exc.response.status_code} - {exc.response.text}")
+                raise RuntimeError(f"Media fetch failed: {exc.response.text}") from exc
+            except Exception as exc:
+                logger.error(f"Media fetch connection error: {str(exc)}")
+                raise RuntimeError(f"Media fetch error: {str(exc)}") from exc
+
+    async def download_media_bytes(self, media_url: str) -> bytes:
+        """Downloads the raw bytes of a WhatsApp media file from its temporary URL."""
+        if self.mock_mode:
+            return b""
+        headers = {"Authorization": f"Bearer {self.access_token}"}
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.get(media_url, headers=headers, follow_redirects=True)
+            resp.raise_for_status()
+            return resp.content
 
 
 whatsapp_client = WhatsAppClient()

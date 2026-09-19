@@ -98,3 +98,10 @@ export const simulateIncomingMessage = async (senderPhone: string, senderName: s
   });
   return res.data;
 };
+
+/** Returns the backend proxy URL for a WhatsApp media message image.
+ *  The backend will fetch from Meta CDN and stream the bytes back.
+ */
+export const getMediaUrl = (contactId: number, messageId: number): string => {
+  return `${API_BASE_URL}/conversations/${contactId}/media/${messageId}`;
+};

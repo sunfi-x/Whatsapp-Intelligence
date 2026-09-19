@@ -2,12 +2,91 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Bot, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, ArrowDown } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Bot, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, ArrowDown, ZoomIn } from 'lucide-react';
+import { Contact, Message, AIReply } from '@/lib/types';
+import { getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage, getMediaUrl } from '@/lib/api';
+import { StatusBadge } from '@/components/StatusBadge';
 
-// Renders message content based on message_type
-function MessageContent({ message, message_type }: { message: string; message_type: string }) {
+// Renders message content — supports actual image display via backend media proxy
+function MessageContent({ message, message_type, contact_id, message_id }: {
+  message: string;
+  message_type: string;
+  contact_id?: number;
+  message_id?: number;
+}) {
+  const [imgState, setImgState] = useState<'loading' | 'loaded' | 'error'>('loading');
+  const [lightbox, setLightbox] = useState(false);
   const type = (message_type || 'text').toLowerCase();
-  if (type === 'image') {
+
+  const hasMediaId = message.includes('MEDIA_ID:');
+  const captionAfterMediaId = hasMediaId
+    ? message.replace(/^.*?MEDIA_ID:\S+\s*/, '').trim()
+    : '';
+
+  const isImage = type === 'image' || message.includes('📷') || message.toLowerCase().includes('[image');
+
+  if (isImage && hasMediaId && contact_id && message_id) {
+    const imgSrc = getMediaUrl(contact_id, message_id);
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div
+          className="relative rounded-2xl overflow-hidden bg-black/5 border border-black/10 max-w-[280px] cursor-pointer group"
+          onClick={() => setLightbox(true)}
+        >
+          {imgState === 'loading' && (
+            <div className="flex items-center justify-center h-40 w-full">
+              <Loader2 className="h-6 w-6 text-[#05392E] animate-spin" />
+            </div>
+          )}
+          {imgState === 'error' && (
+            <div className="flex flex-col items-center justify-center h-36 w-full gap-2">
+              <ImageIcon className="h-8 w-8 text-[#667781]" />
+              <span className="text-[11px] text-[#667781] font-semibold">Image unavailable</span>
+            </div>
+          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgSrc}
+            alt={captionAfterMediaId || 'WhatsApp Photo'}
+            className={`w-full object-cover transition-opacity duration-300 ${imgState === 'loaded' ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
+            style={{ maxHeight: '280px' }}
+            onLoad={() => setImgState('loaded')}
+            onError={() => setImgState('error')}
+          />
+          {imgState === 'loaded' && (
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+              <ZoomIn className="h-7 w-7 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow" />
+            </div>
+          )}
+        </div>
+        {captionAfterMediaId && (
+          <span className="text-xs font-semibold text-[#111B21] px-1">{captionAfterMediaId}</span>
+        )}
+        {lightbox && (
+          <div
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setLightbox(false)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imgSrc}
+              alt={captionAfterMediaId || 'WhatsApp Photo'}
+              className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+            <button
+              className="absolute top-4 right-4 text-white bg-black/50 rounded-full p-2 hover:bg-black/80 transition"
+              onClick={() => setLightbox(false)}
+            >
+              <XCircle className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (isImage) {
     return (
       <div className="flex flex-col items-center gap-2">
         <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-black/5 border border-black/10">
@@ -25,7 +104,6 @@ function MessageContent({ message, message_type }: { message: string; message_ty
           <Video className="h-5 w-5 text-[#25D366]" />
           <span className="text-sm font-semibold text-[#667781]">Video</span>
         </div>
-        <span className="text-xs text-[#667781] italic">{message}</span>
       </div>
     );
   }
@@ -55,9 +133,7 @@ function MessageContent({ message, message_type }: { message: string; message_ty
   }
   return <span>{message}</span>;
 }
-import { Contact, Message, AIReply } from '@/lib/types';
-import { getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage } from '@/lib/api';
-import { StatusBadge } from '@/components/StatusBadge';
+
 
 export default function ConversationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [contactId, setContactId] = useState<number | null>(null);
@@ -309,7 +385,12 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
                   {!isContact && !isAI && (
                     <span className="text-[10px] font-extrabold block mb-0.5 text-[#03241D]">You (Manual)</span>
                   )}
-                  <MessageContent message={msg.message} message_type={msg.message_type} />
+                  <MessageContent
+                    message={msg.message}
+                    message_type={msg.message_type}
+                    contact_id={contactId ?? undefined}
+                    message_id={msg.id}
+                  />
                 </div>
 
                 {/* Timestamp */}
