@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker } from 'lucide-react';
+import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile } from 'lucide-react';
 import { Conversation, AIStatus, Message, AIReply } from '@/lib/types';
 import { getConversations, getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -60,6 +60,25 @@ function MessageContent({ message, message_type }: { message: string; message_ty
 }
 
 
+const EMOJI_CATEGORIES = [
+  {
+    name: 'Popular',
+    emojis: ['😂', '🥰', '😍', '❤️', '😘', '😊', '😭', '🥺', '🙈', '🔥', '👍', '🙏', '💯', '✨', '👀', '🤣']
+  },
+  {
+    name: 'Love & Warmth',
+    emojis: ['❤️', '💖', '💗', '💓', '💕', '💞', '😘', '🥰', '😍', '😻', '👩‍❤️‍👨', '💋', '🤗', '💌']
+  },
+  {
+    name: 'Reactions & Gestures',
+    emojis: ['👍', '👎', '👏', '🙌', '🤝', '✌️', '🤞', '🤙', '🖐️', '👊', '👌', '🙏', '💪', '🔥']
+  },
+  {
+    name: 'Expressions',
+    emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '🥹', '😊', '😇', '🙂', '🙃', '😉', '😌', '😎', '🥳', '😜', '🤪']
+  }
+];
+
 const tabs: { key: 'ALL' | AIStatus; label: string }[] = [
   { key: 'ALL', label: 'All' },
   { key: 'ACTIVE', label: 'Active AI' },
@@ -90,28 +109,31 @@ export default function InboxPage() {
   const [editedText, setEditedText] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedTone, setSelectedTone] = useState('Casual');
+  const [showEmoji, setShowEmoji] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
-  const fetchConversations = async (quiet = false) => {
-    if (!quiet) setIsRefreshing(true);
+  const fetchConversations = useCallback(async () => {
     try {
       const data = await getConversations(filter);
       setConversations(data);
       if (data.length > 0 && selectedId === null) {
         setSelectedId(data[0].contact.id);
       }
+      return data;
     } catch (e) {
       console.error(e);
+      return [];
     } finally {
       setLoading(false);
-      if (!quiet) setIsRefreshing(false);
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     fetchConversations();
   }, [filter]);
 
-  const loadConversationDetail = async (id: number) => {
+  const loadConversationDetail = async (id: number, convList?: Conversation[]) => {
     setDetailLoading(true);
     try {
       const data = await getConversationDetails(id);
@@ -120,7 +142,8 @@ export default function InboxPage() {
       if (data.pending_reply) {
         setEditedText(data.pending_reply.edited_reply || data.pending_reply.generated_reply || '');
       }
-      const match = conversations.find((c) => c.contact.id === id);
+      const list = convList ?? conversations;
+      const match = list.find((c) => c.contact.id === id);
       if (match) setActiveContact(match);
     } catch (e) {
       console.error(e);
@@ -133,23 +156,26 @@ export default function InboxPage() {
     if (selectedId) {
       loadConversationDetail(selectedId);
     }
-  }, [selectedId, conversations]);
+  }, [selectedId]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await fetchConversations(true);
-    if (selectedId) {
-      await loadConversationDetail(selectedId);
+    try {
+      const freshConvs = await fetchConversations() as Conversation[];
+      if (selectedId) {
+        await loadConversationDetail(selectedId, freshConvs);
+      }
+    } finally {
+      setIsRefreshing(false);
     }
-    setIsRefreshing(false);
   };
 
   const act = async (fn: () => Promise<any>) => {
     setActionLoading(true);
     try {
       await fn();
-      await fetchConversations(true);
-      if (selectedId) await loadConversationDetail(selectedId);
+      const freshConvs = await fetchConversations() as Conversation[];
+      if (selectedId) await loadConversationDetail(selectedId, freshConvs);
     } catch (e: any) {
       alert(e.response?.data?.detail || 'Action failed');
     } finally {
@@ -161,11 +187,12 @@ export default function InboxPage() {
     e.preventDefault();
     if (!selectedId || !inputMsg.trim()) return;
     setSendLoading(true);
+    setShowEmoji(false);
     try {
       await sendManualMessage(selectedId, inputMsg);
       setInputMsg('');
-      await fetchConversations(true);
-      await loadConversationDetail(selectedId);
+      const freshConvs = (await fetchConversations()) as Conversation[];
+      await loadConversationDetail(selectedId, freshConvs);
     } catch (e: any) {
       alert(e.response?.data?.detail || 'Send failed');
     } finally {
@@ -503,23 +530,83 @@ export default function InboxPage() {
                 )}
               </div>
 
-              {/* Message Composer */}
-              <form onSubmit={handleManualSend} className="p-4 bg-white border-t border-[#E5EAEA] flex items-center gap-3 shrink-0">
-                <input
-                  type="text"
-                  placeholder={`Type a manual message to ${activeContact.contact.name}...`}
-                  value={inputMsg}
-                  onChange={(e) => setInputMsg(e.target.value)}
-                  className="flex-1 rounded-full border border-[#E5EAEA] bg-[#F7FAF9] px-5 py-3 text-sm font-semibold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner"
-                />
-                <button
-                  type="submit"
-                  disabled={sendLoading || !inputMsg.trim()}
-                  className="btn-3d-bright flex h-11 w-11 items-center justify-center rounded-full shrink-0 disabled:opacity-50"
-                >
-                  {sendLoading ? <Loader2 className="h-5 w-5 animate-spin text-[#111B21]" /> : <Send className="h-5 w-5 text-[#111B21]" />}
-                </button>
-              </form>
+              {/* Message Composer with WhatsApp Emoji Picker */}
+              <div className="relative border-t border-[#E5EAEA] bg-white shrink-0">
+                {/* Emoji Picker Popover */}
+                {showEmoji && (
+                  <div 
+                    ref={emojiRef}
+                    className="absolute bottom-full left-4 mb-2 w-72 sm:w-80 bg-white border border-[#05392E]/15 rounded-3xl p-3 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 duration-150"
+                  >
+                    <div className="flex items-center justify-between border-b border-[#E5EAEA] pb-2 mb-2 px-1">
+                      <span className="text-xs font-extrabold text-[#05392E] flex items-center gap-1.5">
+                        <Smile className="h-4 w-4 text-[#25D366]" />
+                        WhatsApp Emojis
+                      </span>
+                      <button 
+                        type="button"
+                        onClick={() => setShowEmoji(false)} 
+                        className="text-xs font-bold text-[#667781] hover:text-[#111B21] px-1.5 py-0.5 rounded-lg hover:bg-black/5"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                      {EMOJI_CATEGORIES.map((cat) => (
+                        <div key={cat.name}>
+                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#667781] block mb-1 px-1">
+                            {cat.name}
+                          </span>
+                          <div className="grid grid-cols-7 sm:grid-cols-8 gap-1">
+                            {cat.emojis.map((emoji) => (
+                              <button
+                                key={emoji}
+                                type="button"
+                                onClick={() => {
+                                  setInputMsg((prev) => prev + emoji);
+                                  inputRef.current?.focus();
+                                }}
+                                className="h-8 w-8 flex items-center justify-center text-lg hover:bg-[#E8F5E9] rounded-xl transition hover:scale-125"
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <form onSubmit={handleManualSend} className="p-3 sm:p-4 flex items-center gap-2 sm:gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmoji(!showEmoji)}
+                    className={`p-2.5 rounded-full transition ${showEmoji ? 'bg-[#E8F5E9] text-[#25D366]' : 'text-[#667781] hover:bg-black/5 hover:text-[#05392E]'}`}
+                    title="Insert WhatsApp Emoji"
+                  >
+                    <Smile className="h-6 w-6" />
+                  </button>
+
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={`Type a manual message to ${activeContact.contact.name}...`}
+                    value={inputMsg}
+                    onChange={(e) => setInputMsg(e.target.value)}
+                    className="flex-1 rounded-full border border-[#E5EAEA] bg-[#F7FAF9] px-5 py-3 text-sm font-semibold text-[#111B21] focus:outline-none focus:border-[#05392E] transition shadow-inner"
+                  />
+
+                  <button
+                    type="submit"
+                    disabled={sendLoading || !inputMsg.trim()}
+                    className="btn-3d-bright flex h-11 w-11 items-center justify-center rounded-full shrink-0 disabled:opacity-50"
+                  >
+                    {sendLoading ? <Loader2 className="h-5 w-5 animate-spin text-[#111B21]" /> : <Send className="h-5 w-5 text-[#111B21]" />}
+                  </button>
+                </form>
+              </div>
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center p-12 text-center text-[#667781]">
