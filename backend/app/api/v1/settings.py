@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,10 +7,15 @@ from app.core.database import get_db
 from app.models.setting import Setting, GlobalAIStatus
 from app.models.user import User
 from app.schemas.setting import SettingRead, SettingUpdate
-from app.ai.persona import DEFAULT_PERSONA
+from app.ai.persona import TONE_PROMPTS_DEFAULT
 from app.api.v1.auth import get_current_user
 
 router = APIRouter(prefix="/settings", tags=["Settings"])
+
+
+def _build_default_personality_json() -> str:
+    """Returns the 7-tier tone prompts as a JSON string for default settings."""
+    return json.dumps(TONE_PROMPTS_DEFAULT, ensure_ascii=False, indent=2)
 
 
 async def _get_or_create_user_settings(db: AsyncSession, user_id: int) -> Setting:
@@ -18,7 +24,7 @@ async def _get_or_create_user_settings(db: AsyncSession, user_id: int) -> Settin
     if not setting:
         setting = Setting(
             user_id=user_id,
-            personality=DEFAULT_PERSONA,
+            personality=_build_default_personality_json(),
             default_language="Banglish",
             default_tone="Casual",
             global_ai_status=GlobalAIStatus.ON
@@ -26,6 +32,21 @@ async def _get_or_create_user_settings(db: AsyncSession, user_id: int) -> Settin
         db.add(setting)
         await db.commit()
         await db.refresh(setting)
+    else:
+        # Migrate old plain-text personality to new 7-tone JSON format
+        needs_migration = False
+        try:
+            data = json.loads(setting.personality or "")
+            if not isinstance(data, dict) or not any(k in data for k in ["Casual", "Serious", "Romantic"]):
+                needs_migration = True
+        except (json.JSONDecodeError, TypeError):
+            needs_migration = True
+
+        if needs_migration:
+            setting.personality = _build_default_personality_json()
+            await db.commit()
+            await db.refresh(setting)
+
     return setting
 
 
