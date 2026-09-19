@@ -9,15 +9,11 @@ from app.schemas.analytics import AnalyticsOverview, HumanEditComparison
 async def get_analytics_overview(db: AsyncSession) -> AnalyticsOverview:
     """Calculates real-time system metrics."""
     # Total Messages in system
-    res_total = await db.execute(select(func.count(Message.id)))
-    total_messages = res_total.scalar() or 0
-
-    # Incoming contact messages
-    res_rx = await db.execute(select(func.count(Message.id)).where(Message.sender == MessageSender.CONTACT))
+    res_rx = await db.execute(select(func.count(Message.id)).where(or_(Message.sender == MessageSender.CONTACT, Message.sender == "CONTACT")))
     messages_received = res_rx.scalar() or 0
 
     # Total AI replies sent (count MessageSender.AI OR AIReplyStatus.SENT)
-    res_sent_msg = await db.execute(select(func.count(Message.id)).where(Message.sender == MessageSender.AI))
+    res_sent_msg = await db.execute(select(func.count(Message.id)).where(or_(Message.sender == MessageSender.AI, Message.sender == "AI")))
     ai_msg_sent = res_sent_msg.scalar() or 0
 
     res_sent_reply = await db.execute(select(func.count(AIReply.id)).where(AIReply.status == AIReplyStatus.SENT))
@@ -50,7 +46,7 @@ async def get_analytics_overview(db: AsyncSession) -> AnalyticsOverview:
     off_conversations = res_off.scalar() or 0
 
     return AnalyticsOverview(
-        messages_received=total_messages if total_messages > 0 else messages_received,
+        messages_received=messages_received,
         ai_replies_generated=ai_replies_generated,
         ai_replies_sent=ai_replies_sent,
         ai_replies_edited=ai_replies_edited,
