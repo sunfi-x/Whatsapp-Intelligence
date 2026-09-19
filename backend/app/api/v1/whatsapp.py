@@ -58,17 +58,20 @@ class SimulateMessageRequest(BaseModel):
     message_text: str = "bro ki obostha?"
 
 
+import time
+
 @router.post("/simulate-incoming")
 async def simulate_incoming_whatsapp_message(
     req: SimulateMessageRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """Webhook Simulator: Runs simulated incoming messages through the exact same state machine pipeline."""
+    unique_id = f"wamid.simulated_{req.sender_phone}_{int(time.time() * 1000)}"
     res = await state_machine.process_incoming_message(
         db=db,
         sender_phone=req.sender_phone,
         sender_name=req.sender_name,
         message_text=req.message_text,
-        whatsapp_message_id=f"wamid.simulated_{req.sender_phone}_{req.message_text[:10]}"
+        whatsapp_message_id=unique_id
     )
     return res
