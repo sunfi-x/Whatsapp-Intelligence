@@ -16,7 +16,7 @@ export const PendingApprovalCard: React.FC<PendingApprovalCardProps> = ({ conver
   const [isEditing, setIsEditing] = useState(false);
   const [editedText, setEditedText] = useState(pending_reply?.generated_reply || '');
   const [loading, setLoading] = useState(false);
-  const [selectedTone, setSelectedTone] = useState('Casual');
+  const [selectedTone, setSelectedTone] = useState(contact.preferred_tone || 'Casual');
 
   const draftText = pending_reply?.edited_reply || pending_reply?.generated_reply || '';
 
@@ -111,6 +111,7 @@ export const PendingApprovalCard: React.FC<PendingApprovalCardProps> = ({ conver
                   <option value="Friendly">Friendly</option>
                   <option value="Professional">Professional</option>
                   <option value="Serious">Serious</option>
+                  <option value="Romantic">Romantic</option>
                 </select>
                 <button
                   onClick={() => handleRegenerate(selectedTone)}
