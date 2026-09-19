@@ -41,25 +41,27 @@ async def seed_initial_demo_data():
             session.add(user_setting)
             await session.commit()
 
-        # 2. Seed initial demo contacts if missing
-        contacts_res = await session.execute(select(Contact).limit(1))
-        if not contacts_res.scalar_one_or_none():
-            demo_contacts = [
-                Contact(name="Rakib", phone="8801700000001", relationship="Friend", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.OFF, notes="University classmate & close friend. Discusses campus, football, classes."),
-                Contact(name="Fahim", phone="8801700000002", relationship="Classmate", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.OFF, notes="Group project partner."),
-                Contact(name="Sami", phone="8801700000003", relationship="Friend", preferred_language="Banglish", preferred_tone="Funny", ai_status=AIStatus.OFF, notes="Gaming buddy."),
-                Contact(name="Arif", phone="8801700000004", relationship="Professional", preferred_language="English", preferred_tone="Professional", ai_status=AIStatus.OFF, notes="Software Lead."),
-            ]
-            for c in demo_contacts:
-                session.add(c)
+        # 2. Seed initial contacts if missing or update RIO/Sunfi
+        demo_contacts = [
+            Contact(name="RIO", phone="8801781354831", relationship="Girlfriend", preferred_language="Banglish", preferred_tone="Romantic", ai_status=AIStatus.ACTIVE, notes="GF / Orin. Romantic & affectionate relationship."),
+            Contact(name="Sunfi", phone="8801309605222", relationship="Friend", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.ACTIVE, notes="System Owner."),
+            Contact(name="Rakib", phone="8801700000001", relationship="Friend", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.ACTIVE, notes="University classmate & close friend. Discusses campus, football, classes."),
+            Contact(name="Fahim", phone="8801700000002", relationship="Classmate", preferred_language="Banglish", preferred_tone="Casual", ai_status=AIStatus.OFF, notes="Group project partner."),
+            Contact(name="Sami", phone="8801700000003", relationship="Friend", preferred_language="Banglish", preferred_tone="Funny", ai_status=AIStatus.OFF, notes="Gaming buddy."),
+            Contact(name="Arif", phone="8801700000004", relationship="Professional", preferred_language="English", preferred_tone="Professional", ai_status=AIStatus.OFF, notes="Software Lead."),
+        ]
+        
+        for c_data in demo_contacts:
+            existing = await session.execute(select(Contact).where(Contact.phone == c_data.phone))
+            if not existing.scalar_one_or_none():
+                session.add(c_data)
                 await session.commit()
-                await session.refresh(c)
+                await session.refresh(c_data)
                 
-                # Create initial memory
                 mem = ConversationMemory(
-                    contact_id=c.id,
-                    summary=f"{c.name} is a {c.relationship.lower()} of Sunfi.",
-                    important_context=c.notes
+                    contact_id=c_data.id,
+                    summary=f"{c_data.name} is a {c_data.relationship.lower()} of Sunfi.",
+                    important_context=c_data.notes
                 )
                 session.add(mem)
                 await session.commit()
