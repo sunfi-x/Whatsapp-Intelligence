@@ -37,6 +37,11 @@ ngrok.exe
 .idea/
 *.log
 
-# Scratch Test Scripts
+# Scratch & Personal Test Scripts (Private)
 backend/test_*.py
 backend/update_*.py
+backend/setup_gf_and_send.py
+backend/send_to_orin.py
+backend/send_*.py
+backend/*_gf_*.py
+backend/*_orin_*.py
