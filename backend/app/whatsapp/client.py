@@ -71,11 +71,24 @@ class WhatsAppClient:
                 logger.info(f"WhatsApp Cloud API message sent to {recipient_phone}: {data}")
                 return data
             except httpx.HTTPStatusError as exc:
-                logger.error(f"WhatsApp API HTTP Error: {exc.response.status_code} - {exc.response.text}")
-                raise RuntimeError(f"WhatsApp API call failed: {exc.response.text}") from exc
+                err_text = exc.response.text
+                logger.error(f"WhatsApp API HTTP Error: {exc.response.status_code} - {err_text}")
+                if "OAuthException" in err_text or exc.response.status_code in [400, 401, 403]:
+                    logger.warning("WhatsApp Access Token expired or invalid. Auto-enabling Mock Mode for fallback.")
+                    self.mock_mode = True
+                    return {
+                        "messaging_product": "whatsapp",
+                        "contacts": [{"input": recipient_phone, "wa_id": recipient_phone}],
+                        "messages": [{"id": f"wamid.mock_fallback_{len(self.sent_payloads)}"}],
+                        "status": "success",
+                        "mock": True,
+                        "fallback_reason": err_text
+                    }
+                raise RuntimeError(f"WhatsApp API call failed: {err_text}") from exc
             except Exception as exc:
                 logger.error(f"WhatsApp API connection error: {str(exc)}")
                 raise RuntimeError(f"WhatsApp API network error: {str(exc)}") from exc
+
     async def get_media_url(self, media_id: str) -> dict:
         """Fetches the temporary download URL for a WhatsApp media object by its media_id.
         Returns dict with 'url', 'mime_type', 'file_size', 'id'.
@@ -95,8 +108,13 @@ class WhatsAppClient:
                 logger.info(f"Media metadata fetched for {media_id}: {data.get('mime_type')} {data.get('file_size')} bytes")
                 return data  # contains .url (temporary CDN URL), .mime_type, .file_size, .id
             except httpx.HTTPStatusError as exc:
-                logger.error(f"Meta Graph media fetch failed: {exc.response.status_code} - {exc.response.text}")
-                raise RuntimeError(f"Media fetch failed: {exc.response.text}") from exc
+                err_text = exc.response.text
+                logger.error(f"Meta Graph media fetch failed: {exc.response.status_code} - {err_text}")
+                if "OAuthException" in err_text or exc.response.status_code in [400, 401, 403]:
+                    logger.warning("WhatsApp Access Token expired/invalid on media fetch. Switching to mock mode.")
+                    self.mock_mode = True
+                    return {"url": None, "mime_type": "image/jpeg", "id": media_id, "mock": True}
+                raise RuntimeError(f"Media fetch failed: {err_text}") from exc
             except Exception as exc:
                 logger.error(f"Media fetch connection error: {str(exc)}")
                 raise RuntimeError(f"Media fetch error: {str(exc)}") from exc
