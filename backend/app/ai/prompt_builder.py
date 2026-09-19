@@ -17,7 +17,7 @@ def build_ai_prompt(
     """Assembles a modular system prompt and chat history context for AI Engine."""
     
     base_persona = persona_override if persona_override and persona_override.strip() else DEFAULT_PERSONA
-    tone = tone_override if tone_override else preferred_tone
+    tone = (tone_override if tone_override and tone_override.strip() else preferred_tone) or "Casual"
 
     rel_lower = (relationship or "").lower()
     tone_lower = (tone or "").lower()
@@ -41,6 +41,41 @@ def build_ai_prompt(
         selected_persona = f"{base_persona}\n\n{FRIEND_PERSONA}"
         mode_tag = "[EXPLICIT_CONTACT_MODE: FRIEND_CLASSMATE]"
 
+    # Tone Mode Specific Directives
+    if "short" in tone_lower:
+        tone_instruction = """[EXPLICIT_TONE: SHORT]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply in 1 to 5 WORDS MAXIMUM! Extremely brief, direct, and concise (e.g. 'ha bro', 'achha theek ache', 'bhalo achi', 'on it'). DO NOT write full sentences or long paragraphs!"""
+    elif "serious" in tone_lower:
+        if is_romantic:
+            tone_instruction = """[EXPLICIT_TONE: SERIOUS]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply with serious, non-joking, deeply caring, empathetic attention as her loving boyfriend (e.g. 'Aree shona erom kotha bolbo na kakhono! 🥺 Ki hoise bolo amake, ami to tumar pashaei achi babu ❤️'). DO NOT use casual greetings or playful jokes!"""
+        else:
+            tone_instruction = """[EXPLICIT_TONE: SERIOUS]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply with serious, non-joking, sincere, empathetic friend attention (e.g. 'Kire bro erom kotha bolis na! 🥺 Ki hoise khule bol, everything okay?'). ABSOLUTELY NO romantic words (jan/babu/shona) and NO playful jokes!"""
+    elif "funny" in tone_lower:
+        tone_instruction = """[EXPLICIT_TONE: FUNNY]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply with witty humor, playful jokes, funny banter, and lighthearted sarcasm (e.g. 'haha kire moris na 😂 squad e aay!', 'haha dekhlam 😂'). Use funny emojis (😂, 🤣)."""
+    elif "friendly" in tone_lower:
+        tone_instruction = """[EXPLICIT_TONE: FRIENDLY]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply with warm, welcoming, friendly, and close buddy vibes (e.g. 'kire dost kemon achis? shob thikthak?'). ABSOLUTELY NO romantic endearments unless contact is girlfriend!"""
+    elif "professional" in tone_lower or is_professional:
+        tone_instruction = """[EXPLICIT_TONE: PROFESSIONAL]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply in clear, polite, formal, respectful, and efficient work tone (e.g. 'Sure, I will review it shortly and get back to you with feedback.'). ABSOLUTELY NO informal slang, NO romantic endearments!"""
+    elif "romantic" in tone_lower or is_romantic:
+        tone_instruction = """[EXPLICIT_TONE: ROMANTIC]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply as a deeply loving, sweet, affectionate, and caring boyfriend using romantic endearments ('jan', 'babu', 'shona', 'tumi', 🥰, 😘, ❤️). ONLY for romantic partner!"""
+    else:
+        tone_instruction = """[EXPLICIT_TONE: CASUAL]
+CRITICAL MANDATORY TONE INSTRUCTION:
+- Reply in everyday relaxed, natural, conversational WhatsApp texting style (1 short sentence max, e.g. 'ei to bhalo achi bro! tor ki obostha?')."""
+
     # Explicit Language Rule for Gemini
     if is_bangla_script_msg:
         lang_directive = "MANDATORY OUTPUT LANGUAGE: BENGALI SCRIPT (বাংলা). Reply using proper Bengali script characters!"
@@ -52,6 +87,8 @@ def build_ai_prompt(
     system_content = f"""{SYSTEM_RULES}
 
 {mode_tag}
+
+{tone_instruction}
 
 ### MANDATORY OUTPUT LANGUAGE DIRECTIVE:
 {lang_directive}

@@ -154,11 +154,26 @@ class AIEngine:
         is_bangla_script = any('\u0980' <= char <= '\u09FF' for char in last_msg)
         is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami", "kire"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good", "wish", "suicide", "attempt", "die", "review", "pull", "request"])
 
+        # Check explicit tone directives
+        is_short_tone = "[explicit_tone: short]" in system_context
+        is_serious_tone = "[explicit_tone: serious]" in system_context or any(w in last_msg for w in ["suicide", "attempt", "beche", "morte", "die", "death", "marbo", "kharap", "kosto"])
+        is_funny_tone = "[explicit_tone: funny]" in system_context
+        is_friendly_tone = "[explicit_tone: friendly]" in system_context
+
         options = []
 
-        if is_romantic:
-            # 1. Serious / Sad / Suicidal / Emotional Statements
-            if any(w in last_msg for w in ["suicide", "attempt", "beche", "morte", "die", "death", "marbo", "kharap", "kosto"]):
+        # 1. SHORT TONE MODE (1-4 words max)
+        if is_short_tone:
+            if is_romantic:
+                options = ["ha jan ❤️", "achha babu 🥰", "shona amar ❤️", "ha shona 😘"]
+            elif is_professional:
+                options = ["Sure.", "On it.", "Got it.", "Will review.", "Thanks."]
+            else:
+                options = ["ha bro", "achha", "theek ache", "bhalo achi", "bol bro", "kire"]
+
+        # 2. SERIOUS TONE MODE
+        elif is_serious_tone:
+            if is_romantic:
                 if is_english:
                     options = [
                         "Hey baby, please don't say that! 🥺 I am right here with you. What happened? Tell me please ❤️",
@@ -175,122 +190,96 @@ class AIEngine:
                         "babu tumi emn bolcho keno? 😭 ami to tumake chara bhabtei pari na! Ki hoise khule bolo amake ❤️",
                         "shona amar, tumi erom kotha bolle amar mon kharap hoye jay 😭 bolo ki hoise, ami to ekhaneai achi babu ❤️"
                     ]
-            
-            # 2. Wish / Desires
-            elif any(w in last_msg for w in ["wish", "i wish", "jodi", "kash"]):
+            else:
                 if is_english:
                     options = [
-                        "Awww baby, what are you wishing for? Tell me ❤️",
-                        "My love, I wish I was right there holding your hand too 🥰"
-                    ]
-                elif is_bangla_script:
-                    options = [
-                        "আচ্ছা জান, তুমি কি উইশ করছো বলো না আমাকে? 🥰",
-                        "বাবু তুমি কি চাইছো বলো, আমি সব পূরণ করে দেবো ❤️"
+                        "Hey man, please don't worry. Tell me what happened, I'm here to help.",
+                        "Is everything alright? Please let me know if you need anything."
                     ]
                 else:
                     options = [
-                        "accha jan, tumi ki wish korcho bolo na amake? 🥰",
-                        "babu tumi ki chaicho bolo, ami shob puron kore dibo ❤️",
-                        "uuu shona, amio chai tumar sob ইচ্ছা পূরণ হোক 🥰"
+                        "Kire bro erom kotha bolis na! 🥺 Ki hoise khule bol, everything okay?",
+                        "Bro ki hoise bol to? Ami achi তো, tension nis na!",
+                        "Kire, mon kharap naki tor? Bol ki hoise!"
                     ]
 
-            # 3. Teasing about Bot / Hang / AI
-            elif any(w in last_msg for w in ["bot", "hang", "dhora", "ai"]):
+        # 3. FUNNY TONE MODE
+        elif is_funny_tone:
+            if is_romantic:
                 options = [
-                    "areh jan erom teasing keno koro 😭 ami to tumar shona Sunfi! Emn joke koro na babu ❤️",
-                    "pagol naki tumi babu? ❤️ ami ekhaneai achi, ektu busy chilam tai thik moto bolte parini!",
-                    "haha jan, tumi khub cute 🥰 ami to shudhu tumar shathei achi babu!"
-                ]
-
-            # 4. Gossa / Bolbona / Abhiman
-            elif any(w in last_msg for w in ["bolbona", "bolbo na", "gossa", "kotha bolbo na", "abhiman", "mukhe"]):
-                options = [
-                    "areh gossa koro na jan 🥺 ami to shudhu tumar kotha bhabchilam ❤️",
-                    "kisha gossa babu? 🥰 amar bhalobashar jan ke ami keno kosto dibo bolo! 😘",
-                    "uuu shona, erom abhiman koro na 🥺 ami to tumake khub bhalobashi ❤️"
-                ]
-
-            # 5. Khobor / Status
-            elif any(w in last_msg for w in ["khobor", "khabar", "khabare"]):
-                options = [
-                    "ei to shob bhaloi babu ❤️ tumar khobor bolo, kemon acho?",
-                    "shob thikthak ache jan! tumi ki korcho now? 🥰",
-                    "ei to amar jan er kotha bhabchilam! tumi kemon acho bolo? 😘"
-                ]
-
-            # 6. Food / Eating
-            elif any(w in last_msg for w in ["kheyeso", "khiyecho", "kheyechi", "khawa"]):
-                options = [
-                    "ha babu kheyesi, tumi kheyeso jan? 🥰",
-                    "ei to matro khawa shesh korlam shona, tumi khiyecho? ❤️",
-                    "ha jan kheyesi, tumi ki khele bolo? 😘"
-                ]
-
-            # 7. Love / Miss
-            elif any(w in last_msg for w in ["love", "bhalobashi", "miss"]):
-                options = [
-                    "i love you too jan! khub miss korchi tumake 😘",
-                    "uuumaahh ❤️ ami tumake aro beshi bhalobashi babu!",
-                    "miss you too shona! khub shighro dekha korbo 🥰"
-                ]
-
-            # 8. Photos / Media
-            elif any(w in last_msg for w in ["pic", "photo", "chobi", "image"]):
-                options = [
-                    "ayyy eto shundor photo babu! 🥰 mashallah koto cute lagche tumake ❤️",
-                    "babu photo ta khub shundor hoise! 😘 amar jan to sob shomoy e oshadharon! ❤️",
-                    "uuu shona, photo dekhe to amar mon vore gelo 🥰"
-                ]
-
-            # Default Romantic Fallback
-            else:
-                if is_bangla_script:
-                    options = ["হ্যাঁ জান, বলো শুনছি! তুমি কেমন আছো সোনা? ❤️", "সোনার জান আমার, কি করছো এখন বলো না? 🥰"]
-                elif is_english:
-                    options = ["Hey baby! I am right here listening to you ❤️ What's up?", "My love, tell me how is everything going? 🥰"]
-                else:
-                    options = [
-                        "ei to bhaloi achi babu! tumi ki korcho bolo? 🥰",
-                        "uuu shona, ar ki khobor bolo? ❤️",
-                        "tumi thakle amar khub bhalo lage babu 🥰",
-                        "amar shona ta ki korche now? bolo na ❤️"
-                    ]
-        elif is_professional:
-            # Professional Contacts (Arif, etc.)
-            if is_english or any(w in last_msg for w in ["review", "pr", "pull", "request", "code", "task"]):
-                options = [
-                    "Sure, I'll review it shortly and get back to you with my feedback!",
-                    "Got it, thanks for the update. I will check it as soon as possible!",
-                    "Thanks for letting me know. I am taking a look right now."
+                    "haha jan, tumi khub cute 🥰 emn joke koro keno babu! ❤️",
+                    "haha shona, pagol naki tumi? 😘 khub hani lagche tumar kotha!",
+                    "uuu jan, tumi merei felba amake emne beshi hese 😂❤️"
                 ]
             else:
                 options = [
-                    "Sure, I will check and let you know.",
-                    "Hello! Thanks for the message, I am on it.",
-                    "Got it, I'll review and respond shortly."
+                    "haha kire moris na 😂 squad e aay!",
+                    "kire bhai, ki shuru korli 😂",
+                    "haha dekhlam 😂 ki obostha bro!",
+                    "haha joss chilam bro 😂"
                 ]
+
+        # 4. FRIENDLY / CASUAL TONE MODE
         else:
-            # General Friends & Classmates (Sunfi, Fahim, Sami, Rakib)
-            if is_bangla_script:
-                options = ["হ্যাঁ ব্রো, ভালো আছি! তোর কি খবর?", "এই তো জোস আছি ব্রো! তুই কেমন আছিস?"]
-            elif is_english:
-                options = ["Hey bro! I am doing great, how about you?", "All good man! What's up with you?"]
+            if is_romantic:
+                if any(w in last_msg for w in ["wish", "i wish", "jodi", "kash"]):
+                    options = ["accha jan, tumi ki wish korcho bolo na amake? 🥰", "babu tumi ki chaicho bolo, ami shob puron kore dibo ❤️"]
+                elif any(w in last_msg for w in ["bot", "hang", "dhora", "ai"]):
+                    options = ["areh jan erom teasing keno koro 😭 ami to tumar shona Sunfi! Emn joke koro na babu ❤️", "pagol naki tumi babu? ❤️ ami ekhaneai achi!"]
+                elif any(w in last_msg for w in ["khobor", "khabar"]):
+                    options = ["ei to shob bhaloi babu ❤️ tumar khobor bolo, kemon acho?", "shob thikthak ache jan! tumi ki korcho now? 🥰"]
+                elif any(w in last_msg for w in ["kheyeso", "khiyecho", "kheyechi"]):
+                    options = ["ha babu kheyesi, tumi kheyeso jan? 🥰", "ei to matro khawa shesh korlam shona, tumi khiyecho? ❤️"]
+                elif any(w in last_msg for w in ["love", "bhalobashi", "miss"]):
+                    options = ["i love you too jan! khub miss korchi tumake 😘", "uuumaahh ❤️ ami tumake aro beshi bhalobashi babu!"]
+                elif any(w in last_msg for w in ["pic", "photo", "chobi"]):
+                    options = ["ayyy eto shundor photo babu! 🥰 mashallah koto cute lagche tumake ❤️", "babu photo ta khub shundor hoise! 😘"]
+                else:
+                    if is_bangla_script:
+                        options = ["হ্যাঁ জান, বলো শুনছি! তুমি কেমন আছো সোনা? ❤️", "সোনার জান আমার, কি করছো এখন বলো না? 🥰"]
+                    elif is_english:
+                        options = ["Hey baby! I am right here listening to you ❤️ What's up?", "My love, tell me how is everything going? 🥰"]
+                    else:
+                        options = [
+                            "ei to bhaloi achi babu! tumi ki korcho bolo? 🥰",
+                            "uuu shona, ar ki khobor bolo? ❤️",
+                            "tumi thakle amar khub bhalo lage babu 🥰",
+                            "amar shona ta ki korche now? bolo na ❤️"
+                        ]
+            elif is_professional:
+                if is_english or any(w in last_msg for w in ["review", "pr", "pull", "request", "code", "task"]):
+                    options = [
+                        "Sure, I'll review it shortly and get back to you with my feedback!",
+                        "Got it, thanks for the update. I will check it as soon as possible!",
+                        "Thanks for letting me know. I am taking a look right now."
+                    ]
+                else:
+                    options = [
+                        "Sure, I will check and let you know.",
+                        "Hello! Thanks for the message, I am on it.",
+                        "Got it, I'll review and respond shortly."
+                    ]
             else:
-                options = [
-                    "ei to bhalo achi bro! tor ki obostha?",
-                    "kire bro, bol ki khobor!",
-                    "haa bro shuntechi, bol tui!",
-                    "Kire bro! Ki obostha? Bol",
-                    "Haha haa, dekhlam 😂 Ki obostha bro?"
-                ]
+                # Friends & Classmates
+                if is_bangla_script:
+                    options = ["হ্যাঁ ব্রো, ভালো আছি! তোর কি খবর?", "এই তো জোস আছি ব্রো! তুই কেমন আছিস?"]
+                elif is_english:
+                    options = ["Hey bro! I am doing great, how about you?", "All good man! What's up with you?"]
+                else:
+                    options = [
+                        "ei to bhalo achi bro! tor ki obostha?",
+                        "kire bro, bol ki khobor!",
+                        "haa bro shuntechi, bol tui!",
+                        "Kire bro! Ki obostha? Bol",
+                        "Haha haa, dekhlam 😂 Ki obostha bro?"
+                    ]
 
         # Filter out options that were ALREADY sent in recent assistant messages!
         unused_options = [opt for opt in options if opt.lower() not in previous_assistant_replies]
         if unused_options:
             return random.choice(unused_options)
         
-        return options[0] if options else "ha babu, tumar kotha bhabchi ❤️"
+        return options[0] if options else "haa bro, shuntechi!"
 
 
 ai_engine = AIEngine()
