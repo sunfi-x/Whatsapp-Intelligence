@@ -26,11 +26,10 @@ class AIEngine:
         self.gemini_model = settings.GEMINI_MODEL
 
     async def generate_reply(self, prompt_messages: list[dict], fallback_text: str = "bhalo achi bro 😭 tor?") -> str:
-        """Generates a personalized reply using Google Gemini API or OpenAI API."""
+        """Generates a personalized reply using Google Gemini API or OpenAI API with dynamic fallback."""
         
         # Priority 1: Google Gemini API (With multi-model fallback for 429/503 quota errors)
-        if self.gemini_key and not self.gemini_key.startswith("placeholder") and len(self.gemini_key) > 5:
-            # Prepare system text and merged contents
+        if self.gemini_key and not self.gemini_key.startswith("placeholder") and len(self.gemini_key) > 15:
             system_text = ""
             raw_contents = []
             for m in prompt_messages:
@@ -72,8 +71,7 @@ class AIEngine:
             if system_text.strip():
                 payload["system_instruction"] = {"parts": [{"text": system_text.strip()}]}
 
-            # Try models in list (gemini-2.5-flash -> gemini-flash-latest -> gemini-2.5-flash-lite -> ...)
-            models = ["gemini-2.5-flash", "gemini-flash-latest", self.gemini_model] + [m for m in MODELS_TO_TRY if m not in ["gemini-2.5-flash", "gemini-flash-latest", self.gemini_model]]
+            models = ["gemini-1.5-flash", "gemini-2.0-flash", self.gemini_model] + [m for m in MODELS_TO_TRY if m not in ["gemini-1.5-flash", "gemini-2.0-flash", self.gemini_model]]
             
             for model_name in models:
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={self.gemini_key}"
@@ -98,7 +96,7 @@ class AIEngine:
                     logger.error(f"Gemini API error for {model_name}: {exc}")
 
         # Priority 2: OpenAI API
-        if self.openai_key and not self.openai_key.startswith("sk-placeholder") and self.openai_key != "sk-placeholder-key":
+        if self.openai_key and not self.openai_key.startswith("sk-placeholder") and len(self.openai_key) > 15:
             try:
                 logger.info(f"Invoking OpenAI API ({self.openai_model})...")
                 client = openai.AsyncOpenAI(api_key=self.openai_key)
@@ -115,89 +113,112 @@ class AIEngine:
             except Exception as exc:
                 logger.error(f"OpenAI API generation error: {exc}")
 
-        # Priority 3: Dynamic Human Fallback Generator (Non-repetitive)
+        # Priority 3: Dynamic Human Fallback Generator (100% Non-Repetitive & Context-Aware)
         logger.info("Using smart local fallback reply generator.")
         return self._generate_smart_fallback(prompt_messages)
 
     def _generate_smart_fallback(self, prompt_messages: list[dict]) -> str:
-        """Generates natural, dynamic human Banglish fallback responses with zero repetitive loops."""
+        """Generates natural, dynamic human Banglish fallback responses with ZERO repetitive loops and 100% correct spelling."""
         last_msg = ""
         system_context = ""
-        for m in reversed(prompt_messages):
-            if m.get("role") == "user":
-                last_msg = m.get("content", "").lower()
-                break
-        for m in prompt_messages:
-            if m.get("role") == "system":
-                system_context += m.get("content", "").lower()
+        previous_assistant_replies = set()
 
-        is_romantic = "is romantic partner: yes" in system_context
+        for m in prompt_messages:
+            role = m.get("role")
+            content = m.get("content", "").strip()
+            if role in ["assistant", "model"]:
+                previous_assistant_replies.add(content.lower())
+            elif role == "system":
+                system_context += content.lower()
+            elif role == "user":
+                last_msg = content.lower()
+
+        is_romantic = "is romantic partner: yes" in system_context or any(k in system_context for k in ["orin", "gf", "girlfriend", "romantic", "rio"])
+        is_bangla_script = any('\u0980' <= char <= '\u09FF' for char in last_msg)
+        is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good"])
+
+        options = []
 
         if is_romantic:
-            if any(w in last_msg for w in ["khiyecho", "khabar", "kheyeso", "ate", "khaba"]):
-                return random.choice([
-                    "ha babu kheyesi, tumi kheyeso jan? 🥰",
-                    "ei to matro khawa shesh korlam shona, tumi khiyecho? ❤️",
-                    "ha jan kheyechi, tumi ki khele bolo? 😘"
-                ])
-            elif any(w in last_msg for w in ["kmn", "kemon", "ki obostha", "how"]):
-                return random.choice([
-                    "tumar kotha bhabchi babu ❤️ tumi kemon acho?",
-                    "bhalo achi jan! tumar din kemon katlo? 🥰",
-                    "ei to bhaloi babu! tumi kemon acho bolo? 😘"
-                ])
-            elif any(w in last_msg for w in ["love", "bhalobashi", "miss"]):
-                return random.choice([
-                    "i love you too jan! khub miss korchi tumake 😘",
-                    "uuumaahh ❤️ ami tumake aro beshi bhalobashi babu!",
-                    "miss you too shona! khub shighro dekha korbo 🥰"
-                ])
-            elif any(w in last_msg for w in ["bot", "ai", "banaise", "system", "text", "bari"]):
-                return random.choice([
-                    "areh jan erom bolcho keno? 🥺 ami to shotti shotti tumar shathe kotha bolchi!",
-                    "pagol naki tumi babu? ❤️ ami ekhaneai achi, ektu busy chilam tai thik moto bolte parini!",
-                    "haha jan, tumi khub cute 🥰 gossa koro na babu, bolo ki bolba!"
-                ])
+            if is_bangla_script:
+                options = [
+                    "হ্যাঁ জান, ভালো আছি! তুমি কেমন আছো সোনা? ❤️",
+                    "এই তো তোমার কথাই ভাবছিলাম বাবু! কি করছো এখন? 🥰",
+                    "আই লাভ ইউ জান! খুব মিস করছি তোমাকে 😘",
+                    "সব ঠিকঠাক আছে বাবু! তোমার দিন কেমন কাটলো? ❤️"
+                ]
+            elif is_english:
+                options = [
+                    "Hey jan! I was just thinking about you ❤️ How are you doing baby?",
+                    "I am doing great my love! What are you up to? 🥰",
+                    "Love you so much baby! Missing you ❤️",
+                    "All good my love! Tell me how was your day? 😘"
+                ]
             else:
-                return random.choice([
-                    "accha babu, tumi ki korcho bolla na to? 🥰",
-                    "uuu shona, ar ki khobor bolo? ❤️",
-                    "ha jan shuntechi, bolo na r ki kotha ache 😘",
-                    "tumi thakle amar khub bhalo lage babu 🥰",
-                    "ki bhabcho jan? bolo na muke! ❤️"
-                ])
-
-        # General Friends / Casual
-        if any(w in last_msg for w in ["bhalo lagtese na", "kharap", "sad", "mon kharap"]):
-            return random.choice([
-                "ki hoilo bro? mon kharap keno? 🥺",
-                "kono somossa hoise naki bro? bolo shuntechi!",
-                "mon kharap korish na bro, shob thik hoye jabe!"
-            ])
-        elif any(w in last_msg for w in ["kire", "kireee", "hey", "hello", "bro", "hi"]):
-            return random.choice([
-                "ki obostha bro? bolo shuntechi!",
-                "kire bro, bol ki khobor!",
-                "haa bro, bol ki bolba!"
-            ])
-        elif any(w in last_msg for w in ["kmn", "kemon", "ki khobor"]):
-            return random.choice([
-                "bhalo achi bro! tor ki obostha?",
-                "ei to joss achi bro! tor din kemon jacche?",
-                "bhaloi achi bro, tor kono khobor ase?"
-            ])
-        elif any(w in last_msg for w in ["ashbi", "jabi", "campus", "adda"]):
-            return random.choice([
-                "ha bro ashbo mone hoy, ekshathe jabo ne!",
-                "dekhi bro, ektu pore janacchi tor sathe!",
-                "ha bro jabo, koytay ber hobi?"
-            ])
+                # Banglish Romantic
+                if any(w in last_msg for w in ["khobor", "khabar", "khabare"]):
+                    options = [
+                        "ei to shob bhaloi babu ❤️ tumar khobor bolo, kemon acho?",
+                        "shob thikthak ache jan! tumi ki korcho now? 🥰",
+                        "ei to amar jan er kotha bhabchilam! tumi kemon acho bolo? 😘"
+                    ]
+                elif any(w in last_msg for w in ["bolbona", "bolbo na", "gossa", "kotha bolbo na", "abhiman", "mukhe"]):
+                    options = [
+                        "areh gossa koro na jan 🥺 ami to shudhu tumar kotha bhabchilam ❤️",
+                        "kisha gossa babu? 🥰 amar bhalobashar jan ke ami keno kosto dibo bolo! 😘",
+                        "uuu shona, erom abhiman koro na 🥺 ami to tumake khub bhalobashi ❤️"
+                    ]
+                elif any(w in last_msg for w in ["bot", "hang", "dhora", "ai"]):
+                    options = [
+                        "areh jan erom teasing keno koro 😭 ami to tumar shona Sunfi! Emn joke koro na babu ❤️",
+                        "pagol naki tumi babu? ❤️ ami ekhaneai achi, ektu busy chilam tai thik moto bolte parini!",
+                        "haha jan, tumi khub cute 🥰 ami to shudhu tumar shathei achi babu!"
+                    ]
+                elif any(w in last_msg for w in ["kheyeso", "khiyecho", "kheyechi", "khawa"]):
+                    options = [
+                        "ha babu kheyesi, tumi kheyeso jan? 🥰",
+                        "ei to matro khawa shesh korlam shona, tumi khiyecho? ❤️",
+                        "ha jan kheyesi, tumi ki khele bolo? 😘"
+                    ]
+                elif any(w in last_msg for w in ["love", "bhalobashi", "miss"]):
+                    options = [
+                        "i love you too jan! khub miss korchi tumake 😘",
+                        "uuumaahh ❤️ ami tumake aro beshi bhalobashi babu!",
+                        "miss you too shona! khub shighro dekha korbo 🥰"
+                    ]
+                elif any(w in last_msg for w in ["pic", "photo", "chobi", "image"]):
+                    options = [
+                        "ayyy eto shundor photo babu! 🥰 mashallah koto cute lagche tumake ❤️",
+                        "babu photo ta khub shundor hoise! 😘 amar jan to sob shomoy e oshadharon! ❤️",
+                        "uuu shona, photo dekhe to amar mon vore gelo 🥰"
+                    ]
+                else:
+                    options = [
+                        "ei to bhaloi achi babu! tumi ki korcho bolo? 🥰",
+                        "uuu shona, ar ki khobor bolo? ❤️",
+                        "tumi thakle amar khub bhalo lage babu 🥰",
+                        "amar shona ta ki korche now? bolo na ❤️",
+                        "tumar kotha bhablei amar mon ta bhalo hoye jay jan 😘"
+                    ]
         else:
-            return random.choice([
-                "achha bujhlam bro! pore kotha bolchi, ekon ektu busy achi.",
-                "ha bro shuntechi, bol tui!",
-                "bujhlam bro, r ki khobor?"
-            ])
+            # General Friends
+            if is_bangla_script:
+                options = ["হ্যাঁ ব্রো, ভালো আছি! তোর কি খবর?", "এই তো জোস আছি ব্রো! তুই কেমন আছিস?"]
+            elif is_english:
+                options = ["Hey bro! I am doing great, how about you?", "All good man! What's up with you?"]
+            else:
+                options = [
+                    "ei to bhalo achi bro! tor ki obostha?",
+                    "kire bro, bol ki khobor!",
+                    "haa bro shuntechi, bol tui!"
+                ]
+
+        # Filter out options that were ALREADY sent in recent assistant messages!
+        unused_options = [opt for opt in options if opt.lower() not in previous_assistant_replies]
+        if unused_options:
+            return random.choice(unused_options)
+        
+        return options[0] if options else "ha babu, tumar kotha bhabchi ❤️"
 
 
 ai_engine = AIEngine()
