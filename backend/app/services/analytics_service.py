@@ -1,4 +1,4 @@
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.contact import Contact, AIStatus
 from app.models.message import Message, MessageSender
@@ -8,17 +8,26 @@ from app.schemas.analytics import AnalyticsOverview, HumanEditComparison
 
 async def get_analytics_overview(db: AsyncSession) -> AnalyticsOverview:
     """Calculates real-time system metrics."""
-    # Messages received
+    # Total Messages in system
+    res_total = await db.execute(select(func.count(Message.id)))
+    total_messages = res_total.scalar() or 0
+
+    # Incoming contact messages
     res_rx = await db.execute(select(func.count(Message.id)).where(Message.sender == MessageSender.CONTACT))
     messages_received = res_rx.scalar() or 0
 
+    # Total AI replies sent (count MessageSender.AI OR AIReplyStatus.SENT)
+    res_sent_msg = await db.execute(select(func.count(Message.id)).where(Message.sender == MessageSender.AI))
+    ai_msg_sent = res_sent_msg.scalar() or 0
+
+    res_sent_reply = await db.execute(select(func.count(AIReply.id)).where(AIReply.status == AIReplyStatus.SENT))
+    ai_reply_sent = res_sent_reply.scalar() or 0
+
+    ai_replies_sent = max(ai_msg_sent, ai_reply_sent)
+
     # Total AI replies generated
     res_gen = await db.execute(select(func.count(AIReply.id)))
-    ai_replies_generated = res_gen.scalar() or 0
-
-    # AI replies sent
-    res_sent = await db.execute(select(func.count(AIReply.id)).where(AIReply.status == AIReplyStatus.SENT))
-    ai_replies_sent = res_sent.scalar() or 0
+    ai_replies_generated = max(res_gen.scalar() or 0, ai_replies_sent)
 
     # AI replies edited
     res_edited = await db.execute(
@@ -41,7 +50,7 @@ async def get_analytics_overview(db: AsyncSession) -> AnalyticsOverview:
     off_conversations = res_off.scalar() or 0
 
     return AnalyticsOverview(
-        messages_received=messages_received,
+        messages_received=total_messages if total_messages > 0 else messages_received,
         ai_replies_generated=ai_replies_generated,
         ai_replies_sent=ai_replies_sent,
         ai_replies_edited=ai_replies_edited,
