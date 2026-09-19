@@ -257,11 +257,23 @@ export default function InboxPage() {
             const isDiff = JSON.stringify(prevPending) !== JSON.stringify(detail.pending_reply);
             return isDiff ? detail.pending_reply : prevPending;
           });
+
+          // Sync activeContact so AI status badge & pending approval cards update live!
+          if (detail.contact) {
+            const lastMsg = detail.messages && detail.messages.length > 0 ? detail.messages[detail.messages.length - 1] : null;
+            setActiveContact({
+              contact: detail.contact,
+              last_message: lastMsg,
+              pending_reply: detail.pending_reply || null,
+              total_messages: detail.messages ? detail.messages.length : 0,
+              updated_at: detail.contact.updated_at || new Date().toISOString()
+            });
+          }
         }
       } catch (err) {
         console.error('Polling error:', err);
       }
-    }, 4000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [filter, selectedId, fetchConversations]);
