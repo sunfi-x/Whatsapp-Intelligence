@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile } from 'lucide-react';
+import { MessageSquare, Search, ArrowRight, Bot, ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, Smile, ArrowDown, ChevronDown } from 'lucide-react';
 import { Conversation, AIStatus, Message, AIReply } from '@/lib/types';
 import { getConversations, getConversationDetails, approveAndStartAI, rejectReply, turnOffAI, regenerateReply, sendManualMessage } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -102,6 +102,12 @@ export default function InboxPage() {
   const [pendingReply, setPendingReply] = useState<AIReply | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   // Chat actions
   const [inputMsg, setInputMsg] = useState('');
   const [sendLoading, setSendLoading] = useState(false);
@@ -157,6 +163,12 @@ export default function InboxPage() {
       loadConversationDetail(selectedId);
     }
   }, [selectedId]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -528,6 +540,21 @@ export default function InboxPage() {
                     );
                   })
                 )}
+
+                {/* Floating Down / Latest Message Button */}
+                {messages.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={scrollToBottom}
+                    className="sticky bottom-4 right-4 ml-auto p-2.5 rounded-full bg-white/95 border border-[#05392E]/20 text-[#05392E] shadow-2xl hover:bg-[#E8F5E9] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 z-30 backdrop-blur"
+                    title="Jump to Latest Message"
+                  >
+                    <ArrowDown className="h-4 w-4 text-[#25D366]" />
+                    <span className="text-[11px] font-extrabold pr-1 hidden sm:inline text-[#05392E]">Latest</span>
+                  </button>
+                )}
+
+                <div ref={chatEndRef} />
               </div>
 
               {/* Message Composer with WhatsApp Emoji Picker */}

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Bot, Sparkles, ImageIcon, FileText, Mic, Video, Sticker } from 'lucide-react';
+import { ArrowLeft, Send, CheckCircle2, XCircle, Edit3, RefreshCw, Power, Loader2, Bot, Sparkles, ImageIcon, FileText, Mic, Video, Sticker, ArrowDown } from 'lucide-react';
 
 // Renders message content based on message_type
 function MessageContent({ message, message_type }: { message: string; message_type: string }) {
@@ -320,6 +320,20 @@ export default function ConversationDetailPage({ params }: { params: Promise<{ i
             );
           })
         )}
+
+        {/* Floating Down / Latest Message Button */}
+        {messages.length > 0 && (
+          <button
+            type="button"
+            onClick={() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            className="sticky bottom-4 right-4 ml-auto p-2.5 rounded-full bg-white/95 border border-[#05392E]/20 text-[#05392E] shadow-2xl hover:bg-[#E8F5E9] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 z-30 backdrop-blur"
+            title="Jump to Latest Message"
+          >
+            <ArrowDown className="h-4 w-4 text-[#25D366]" />
+            <span className="text-[11px] font-extrabold pr-1 hidden sm:inline text-[#05392E]">Latest</span>
+          </button>
+        )}
+
         <div ref={chatEndRef} />
       </div>
 
