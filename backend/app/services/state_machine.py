@@ -24,12 +24,12 @@ async def get_or_create_contact(db: AsyncSession, phone: str, name: str = "Unkno
     
     # 1. Search exact match with clean_phone
     result = await db.execute(select(Contact).where(Contact.phone == clean_phone))
-    contact = result.scalar_one_or_none()
+    contact = result.scalars().first()
     
     # 2. Search fallback: match by raw phone string
     if not contact:
         res_raw = await db.execute(select(Contact).where(Contact.phone == phone))
-        contact = res_raw.scalar_one_or_none()
+        contact = res_raw.scalars().first()
         
     # 3. Search fallback: match by last 10 digits suffix
     if not contact and len(clean_phone) >= 10:
@@ -93,7 +93,7 @@ async def process_incoming_message(
             dup_check = await db.execute(
                 select(Message).where(Message.whatsapp_message_id == whatsapp_message_id)
             )
-            if dup_check.scalar_one_or_none():
+            if dup_check.scalars().first():
                 logger.info(f"Duplicate message payload ignored: {whatsapp_message_id}")
                 return {"status": "duplicate_ignored", "whatsapp_message_id": whatsapp_message_id}
 
@@ -113,7 +113,7 @@ async def process_incoming_message(
 
         # 5. Check Global AI Status
         setting_res = await db.execute(select(Setting).limit(1))
-        setting = setting_res.scalar_one_or_none()
+        setting = setting_res.scalars().first()
         global_ai_status = setting.global_ai_status if setting else GlobalAIStatus.ON
         personality = setting.personality if setting else None
 
@@ -226,7 +226,7 @@ async def approve_and_start_ai(db: AsyncSession, contact_id: int, edited_reply: 
     lock = await get_contact_lock(contact_id)
     async with lock:
         res = await db.execute(select(Contact).where(Contact.id == contact_id))
-        contact = res.scalar_one_or_none()
+        contact = res.scalars().first()
         if not contact:
             raise ValueError("Contact not found")
 
@@ -239,7 +239,7 @@ async def approve_and_start_ai(db: AsyncSession, contact_id: int, edited_reply: 
             .order_by(AIReply.created_at.desc())
             .limit(1)
         )
-        ai_reply = reply_res.scalar_one_or_none()
+        ai_reply = reply_res.scalars().first()
         
         final_text = edited_reply.strip() if edited_reply and edited_reply.strip() else (ai_reply.generated_reply if ai_reply else "")
         if not final_text:
@@ -289,7 +289,7 @@ async def reject_pending_reply(db: AsyncSession, contact_id: int) -> dict:
     lock = await get_contact_lock(contact_id)
     async with lock:
         res = await db.execute(select(Contact).where(Contact.id == contact_id))
-        contact = res.scalar_one_or_none()
+        contact = res.scalars().first()
         if contact:
             contact.ai_status = AIStatus.OFF
             contact.updated_at = datetime.now(timezone.utc)
@@ -302,7 +302,7 @@ async def reject_pending_reply(db: AsyncSession, contact_id: int) -> dict:
             .order_by(AIReply.created_at.desc())
             .limit(1)
         )
-        ai_reply = reply_res.scalar_one_or_none()
+        ai_reply = reply_res.scalars().first()
         if ai_reply:
             ai_reply.status = AIReplyStatus.REJECTED
             
@@ -315,7 +315,7 @@ async def turn_off_ai(db: AsyncSession, contact_id: int) -> dict:
     lock = await get_contact_lock(contact_id)
     async with lock:
         res = await db.execute(select(Contact).where(Contact.id == contact_id))
-        contact = res.scalar_one_or_none()
+        contact = res.scalars().first()
         if contact:
             contact.ai_status = AIStatus.OFF
             await db.commit()
@@ -334,7 +334,7 @@ async def regenerate_pending_reply(db: AsyncSession, contact_id: int, tone_overr
     lock = await get_contact_lock(contact_id)
     async with lock:
         res = await db.execute(select(Contact).where(Contact.id == contact_id))
-        contact = res.scalar_one_or_none()
+        contact = res.scalars().first()
         if not contact:
             raise ValueError("Contact not found")
 
@@ -346,11 +346,11 @@ async def regenerate_pending_reply(db: AsyncSession, contact_id: int, tone_overr
             .order_by(Message.timestamp.desc())
             .limit(1)
         )
-        last_msg = msg_res.scalar_one_or_none()
+        last_msg = msg_res.scalars().first()
         current_text = last_msg.message if last_msg else "Hello"
 
         setting_res = await db.execute(select(Setting).limit(1))
-        setting = setting_res.scalar_one_or_none()
+        setting = setting_res.scalars().first()
         personality = setting.personality if setting else None
 
         memory = await get_or_create_memory(db, contact.id)
@@ -374,7 +374,7 @@ async def regenerate_pending_reply(db: AsyncSession, contact_id: int, tone_overr
             .order_by(AIReply.created_at.desc())
             .limit(1)
         )
-        ai_reply = reply_res.scalar_one_or_none()
+        ai_reply = reply_res.scalars().first()
         
         if ai_reply:
             ai_reply.generated_reply = new_draft

@@ -20,7 +20,7 @@ async def emergency_stop_all(db: AsyncSession = Depends(get_db)):
 async def update_ai_reply(reply_id: int, update_in: AIReplyUpdate, db: AsyncSession = Depends(get_db)):
     """Updates the edited reply draft before approval."""
     res = await db.execute(select(AIReply).where(AIReply.id == reply_id))
-    ai_reply = res.scalar_one_or_none()
+    ai_reply = res.scalars().first()
     if not ai_reply:
         raise HTTPException(status_code=404, detail="AI reply draft not found")
 

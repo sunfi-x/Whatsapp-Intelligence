@@ -21,7 +21,7 @@ async def seed_initial_demo_data():
     async with AsyncSessionLocal() as session:
         # 1. Seed default user if missing
         user_res = await session.execute(select(User).limit(1))
-        user = user_res.scalar_one_or_none()
+        user = user_res.scalars().first()
         if not user:
             user = User(
                 name="Sunfi",
@@ -49,7 +49,7 @@ async def seed_initial_demo_data():
             phone_to_contact = {}
             for c in FULL_SEED_DATA.get("contacts", []):
                 res = await session.execute(select(Contact).where(Contact.phone == c["phone"]))
-                contact = res.scalar_one_or_none()
+                contact = res.scalars().first()
                 status_enum = AIStatus.ACTIVE if c.get("ai_status") == "ACTIVE" else (AIStatus.PENDING if c.get("ai_status") == "PENDING" else AIStatus.OFF)
                 if not contact:
                     contact = Contact(
@@ -82,7 +82,7 @@ async def seed_initial_demo_data():
                 dup = await session.execute(
                     select(Message).where(Message.contact_id == contact.id).where(Message.message == m["message"])
                 )
-                if dup.scalar_one_or_none():
+                if dup.scalars().first():
                     continue
                 sender_enum = MessageSender.AI if m["sender"] == "AI" else (MessageSender.USER if m["sender"] == "USER" else MessageSender.CONTACT)
                 dt = datetime.now(timezone.utc)

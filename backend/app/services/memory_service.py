@@ -12,7 +12,7 @@ async def get_or_create_memory(db: AsyncSession, contact_id: int) -> Conversatio
     result = await db.execute(
         select(ConversationMemory).where(ConversationMemory.contact_id == contact_id)
     )
-    memory = result.scalar_one_or_none()
+    memory = result.scalars().first()
     if not memory:
         memory = ConversationMemory(
             contact_id=contact_id,

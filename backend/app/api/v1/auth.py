@@ -19,7 +19,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     if not token:
         # For ease of testing and single-user personal dashboard default fallback
         user_res = await db.execute(select(User).limit(1))
-        user = user_res.scalar_one_or_none()
+        user = user_res.scalars().first()
         if user:
             return user
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
@@ -30,7 +30,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
         
     user_res = await db.execute(select(User).where(User.id == int(user_id)))
-    user = user_res.scalar_one_or_none()
+    user = user_res.scalars().first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
@@ -39,7 +39,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
 @router.post("/register", response_model=UserRead)
 async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == user_in.email))
-    if existing.scalar_one_or_none():
+    if existing.scalars().first():
         raise HTTPException(status_code=400, detail="User with this email already exists")
 
     user = User(
@@ -68,7 +68,7 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
 @router.post("/login", response_model=Token)
 async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
     user_res = await db.execute(select(User).where(User.email == login_data.email))
-    user = user_res.scalar_one_or_none()
+    user = user_res.scalars().first()
     if not user or not verify_password(login_data.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect email or password")
 

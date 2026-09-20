@@ -49,7 +49,7 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
     phone_to_contact_id = {}
     for c in payload.contacts:
         res = await db.execute(select(Contact).where(Contact.phone == c.phone))
-        contact = res.scalar_one_or_none()
+        contact = res.scalars().first()
         status_enum = AIStatus.ACTIVE if c.ai_status == "ACTIVE" else (AIStatus.PENDING if c.ai_status == "PENDING" else AIStatus.OFF)
 
         if not contact:
@@ -85,7 +85,7 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
         contact_id = phone_to_contact_id.get(m.phone)
         if not contact_id:
             res = await db.execute(select(Contact).where(Contact.phone == m.phone))
-            c_obj = res.scalar_one_or_none()
+            c_obj = res.scalars().first()
             if c_obj:
                 contact_id = c_obj.id
                 phone_to_contact_id[m.phone] = contact_id
@@ -98,7 +98,7 @@ async def import_database_snapshot(payload: DBImportPayload, db: AsyncSession = 
             .where(Message.contact_id == contact_id)
             .where(Message.message == m.message)
         )
-        if dup_check.scalar_one_or_none():
+        if dup_check.scalars().first():
             continue
 
         sender_enum = MessageSender.AI if m.sender == "AI" else (MessageSender.USER if m.sender == "USER" else MessageSender.CONTACT)
@@ -141,7 +141,7 @@ async def sync_system_data_endpoint(db: AsyncSession = Depends(get_db)):
         phone_to_contact = {}
         for c in FULL_SEED_DATA.get("contacts", []):
             res = await db.execute(select(Contact).where(Contact.phone == c["phone"]))
-            contact = res.scalar_one_or_none()
+            contact = res.scalars().first()
             status_enum = AIStatus.ACTIVE if c.get("ai_status") == "ACTIVE" else (AIStatus.PENDING if c.get("ai_status") == "PENDING" else AIStatus.OFF)
             if not contact:
                 contact = Contact(
@@ -175,7 +175,7 @@ async def sync_system_data_endpoint(db: AsyncSession = Depends(get_db)):
             dup = await db.execute(
                 select(Message).where(Message.contact_id == contact.id).where(Message.message == m["message"])
             )
-            if dup.scalar_one_or_none():
+            if dup.scalars().first():
                 continue
             sender_enum = MessageSender.AI if m["sender"] == "AI" else (MessageSender.USER if m["sender"] == "USER" else MessageSender.CONTACT)
             dt = datetime.now(timezone.utc)

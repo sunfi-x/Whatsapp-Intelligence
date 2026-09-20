@@ -20,7 +20,7 @@ def _build_default_personality_json() -> str:
 
 async def _get_or_create_user_settings(db: AsyncSession, user_id: int) -> Setting:
     res = await db.execute(select(Setting).where(Setting.user_id == user_id))
-    setting = res.scalar_one_or_none()
+    setting = res.scalars().first()
     if not setting:
         setting = Setting(
             user_id=user_id,

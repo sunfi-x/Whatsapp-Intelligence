@@ -22,7 +22,7 @@ async def list_contacts(db: AsyncSession = Depends(get_db)):
 async def create_contact(contact_in: ContactCreate, db: AsyncSession = Depends(get_db)):
     clean_phone = normalize_phone_number(contact_in.phone)
     existing = await db.execute(select(Contact).where(Contact.phone == clean_phone))
-    if existing.scalar_one_or_none():
+    if existing.scalars().first():
         raise HTTPException(status_code=400, detail="Contact with this phone number already exists")
 
     data = contact_in.model_dump()
@@ -38,7 +38,7 @@ async def create_contact(contact_in: ContactCreate, db: AsyncSession = Depends(g
 @router.get("/{contact_id}", response_model=ContactRead)
 async def get_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Contact).where(Contact.id == contact_id))
-    contact = result.scalar_one_or_none()
+    contact = result.scalars().first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
     return contact
@@ -47,7 +47,7 @@ async def get_contact(contact_id: int, db: AsyncSession = Depends(get_db)):
 @router.patch("/{contact_id}", response_model=ContactRead)
 async def update_contact(contact_id: int, update_in: ContactUpdate, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Contact).where(Contact.id == contact_id))
-    contact = result.scalar_one_or_none()
+    contact = result.scalars().first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 

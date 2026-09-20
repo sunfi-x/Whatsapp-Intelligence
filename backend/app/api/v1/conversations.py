@@ -47,7 +47,7 @@ async def list_conversations(status_filter: str | None = None, db: AsyncSession 
             .order_by(Message.timestamp.desc())
             .limit(1)
         )
-        last_msg = last_msg_res.scalar_one_or_none()
+        last_msg = last_msg_res.scalars().first()
 
         # Fetch pending reply if exists
         pending_reply_res = await db.execute(
@@ -58,7 +58,7 @@ async def list_conversations(status_filter: str | None = None, db: AsyncSession 
             .order_by(AIReply.created_at.desc())
             .limit(1)
         )
-        pending_reply = pending_reply_res.scalar_one_or_none()
+        pending_reply = pending_reply_res.scalars().first()
 
         # Total messages count
         count_res = await db.execute(
@@ -89,7 +89,7 @@ async def list_pending_conversations(db: AsyncSession = Depends(get_db)):
 async def get_conversation_details(contact_id: int, db: AsyncSession = Depends(get_db)):
     """Retrieves conversation thread messages and contact info."""
     c_res = await db.execute(select(Contact).where(Contact.id == contact_id))
-    contact = c_res.scalar_one_or_none()
+    contact = c_res.scalars().first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
@@ -110,7 +110,7 @@ async def get_conversation_details(contact_id: int, db: AsyncSession = Depends(g
         .order_by(AIReply.created_at.desc())
         .limit(1)
     )
-    pending_reply = pending_reply_res.scalar_one_or_none()
+    pending_reply = pending_reply_res.scalars().first()
 
     return {
         "contact": ContactRead.model_validate(contact),
@@ -159,7 +159,7 @@ async def send_manual_message(contact_id: int, message_body: dict, db: AsyncSess
         raise HTTPException(status_code=400, detail="Message text is required")
 
     c_res = await db.execute(select(Contact).where(Contact.id == contact_id))
-    contact = c_res.scalar_one_or_none()
+    contact = c_res.scalars().first()
     if not contact:
         raise HTTPException(status_code=404, detail="Contact not found")
 
@@ -198,7 +198,7 @@ async def get_message_media(contact_id: int, message_id: int, db: AsyncSession =
     msg_res = await db.execute(
         select(Message).where(Message.id == message_id, Message.contact_id == contact_id)
     )
-    msg = msg_res.scalar_one_or_none()
+    msg = msg_res.scalars().first()
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")
 
