@@ -149,23 +149,22 @@ class AIEngine:
             elif role == "user":
                 last_msg = content.lower()
 
-        is_romantic = "[explicit_contact_mode: romantic_girlfriend]" in system_context
-        is_professional = "[explicit_contact_mode: professional_work]" in system_context
+        is_romantic = "[explicit_contact_mode: romantic_girlfriend]" in system_context or "[explicit_tone: romantic]" in system_context
+        is_professional = "[explicit_contact_mode: professional_work]" in system_context or "[explicit_tone: professional]" in system_context
         is_bangla_script = any('\u0980' <= char <= '\u09FF' for char in last_msg)
-        is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami", "kire"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good", "wish", "suicide", "attempt", "die", "review", "pull", "request"])
+        is_english = not any(w in last_msg for w in ["ki", "kmn", "kemon", "achho", "acho", "obostha", "kheyeso", "tumi", "amar", "tomar", "jan", "shona", "babu", "bhalo", "bro", "ami", "kire", "dost"]) and any(w in last_msg for w in ["how", "what", "doing", "going", "love", "you", "fine", "good", "review", "work", "code", "help"])
 
         # Check explicit tone directives
         is_short_tone = "[explicit_tone: short]" in system_context
         is_serious_tone = "[explicit_tone: serious]" in system_context or any(w in last_msg for w in ["suicide", "attempt", "beche", "morte", "die", "death", "marbo", "kharap", "kosto"])
         is_funny_tone = "[explicit_tone: funny]" in system_context
-        is_friendly_tone = "[explicit_tone: friendly]" in system_context
 
         options = []
 
-        # 1. SHORT TONE MODE (1-4 words max)
+        # 1. SHORT TONE MODE (1-5 words max)
         if is_short_tone:
             if is_romantic:
-                options = ["ha jan ❤️", "achha babu 🥰", "shona amar ❤️", "ha shona 😘"]
+                options = ["ha jan ❤️", "achha babu 🥰", "shona amar ❤️", "ha shona 😘", "umm jan ❤️"]
             elif is_professional:
                 options = ["Sure.", "On it.", "Got it.", "Will review.", "Thanks."]
             else:
@@ -219,13 +218,13 @@ class AIEngine:
                     "haha joss chilam bro 😂"
                 ]
 
-        # 4. FRIENDLY / CASUAL TONE MODE
+        # 4. CASUAL / FRIENDLY / ROMANTIC DYNAMIC MATCHING
         else:
             if is_romantic:
-                if any(w in last_msg for w in ["wish", "i wish", "jodi", "kash"]):
+                if any(w in last_msg for w in ["kothay", "kotha"]):
+                    options = ["basay achi babu ❤️ tumi kothay now? 🥰", "ei to ekhaneai achi jan! tumi kothay? 😘"]
+                elif any(w in last_msg for w in ["wish", "jodi", "kash"]):
                     options = ["accha jan, tumi ki wish korcho bolo na amake? 🥰", "babu tumi ki chaicho bolo, ami shob puron kore dibo ❤️"]
-                elif any(w in last_msg for w in ["bot", "hang", "dhora", "ai"]):
-                    options = ["areh jan erom teasing keno koro 😭 ami to tumar shona Sunfi! Emn joke koro na babu ❤️", "pagol naki tumi babu? ❤️ ami ekhaneai achi!"]
                 elif any(w in last_msg for w in ["khobor", "khabar"]):
                     options = ["ei to shob bhaloi babu ❤️ tumar khobor bolo, kemon acho?", "shob thikthak ache jan! tumi ki korcho now? 🥰"]
                 elif any(w in last_msg for w in ["kheyeso", "khiyecho", "kheyechi"]):
@@ -261,7 +260,11 @@ class AIEngine:
                     ]
             else:
                 # Friends & Classmates
-                if is_bangla_script:
+                if any(w in last_msg for w in ["kothay", "kotha"]):
+                    options = ["basay achi bro! tui kothay?", "ei to ekhaneai achi, tui kothay bro?"]
+                elif any(w in last_msg for w in ["kheyeso", "kheyechi"]):
+                    options = ["ha bro kheyechi, tui?", "ha bro kheyesi! tui kheyeso?"]
+                elif is_bangla_script:
                     options = ["হ্যাঁ ব্রো, ভালো আছি! তোর কি খবর?", "এই তো জোস আছি ব্রো! তুই কেমন আছিস?"]
                 elif is_english:
                     options = ["Hey bro! I am doing great, how about you?", "All good man! What's up with you?"]
