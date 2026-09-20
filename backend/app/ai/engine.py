@@ -8,12 +8,12 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# List of models to try in order of preference (high-quota models first)
+# List of models to try in order of preference (updated for current availability)
 MODELS_TO_TRY = [
-    "gemini-1.5-flash",
-    "gemini-2.0-flash",
-    "gemini-1.5-pro",
-    "gemini-flash-latest"
+    "gemini-3.1-flash-lite",     # Fast, free, available
+    "gemini-flash-latest",        # Latest flash alias
+    "gemini-3-flash-preview",     # Preview model, works
+    "gemini-3.1-flash-lite-preview",  # Fallback preview
 ]
 
 
@@ -79,22 +79,17 @@ class AIEngine:
             if system_text.strip():
                 payload["system_instruction"] = {"parts": [{"text": system_text.strip()}]}
 
-            models = ["gemini-1.5-flash", "gemini-2.0-flash", self.gemini_model] + [m for m in MODELS_TO_TRY if m not in ["gemini-1.5-flash", "gemini-2.0-flash", self.gemini_model]]
-            
-            headers = {
-                "x-goog-api-key": clean_gemini_key,
-                "Content-Type": "application/json"
-            }
-            if clean_gemini_key.startswith("AQ.") or clean_gemini_key.startswith("ya29."):
-                headers["Authorization"] = f"Bearer {clean_gemini_key}"
+            models = [m for m in MODELS_TO_TRY if m != self.gemini_model] + [self.gemini_model]
 
             for model_name in models:
+                # Always use ?key= query param — AQ. keys are valid API keys, not OAuth tokens
                 url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={clean_gemini_key}"
+                headers = {"Content-Type": "application/json"}
                 try:
                     logger.info(f"Invoking Google Gemini API ({model_name}) with full context...")
                     async with httpx.AsyncClient(timeout=12.0) as client:
                         response = await client.post(url, json=payload, headers=headers)
-                    
+
                     if response.status_code == 200:
                         res_json = response.json()
                         candidates = res_json.get("candidates", [])

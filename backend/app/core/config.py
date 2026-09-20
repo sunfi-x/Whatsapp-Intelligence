@@ -20,7 +20,7 @@ class Settings(BaseSettings):
 
     # Google Gemini API Configuration (Higher Free Rate Limits & 1M+ Token Context)
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-3.6-flash"
+    GEMINI_MODEL: str = "gemini-3.1-flash-lite"
     
     # WhatsApp Cloud API Configuration
     WHATSAPP_ACCESS_TOKEN: str = "placeholder_whatsapp_access_token"
